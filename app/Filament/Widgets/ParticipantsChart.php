@@ -2,38 +2,67 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Participant;
-use App\Models\Goal;
+use App\Models\ParticipantCourseProgress;
 use Filament\Widgets\ChartWidget;
+use Carbon\Carbon;
 
 class ParticipantsChart extends ChartWidget
 {
-    protected static ?string $heading = 'Participants by Goal';
+    protected static ?string $heading = 'Student Enrollment Trends (Last 6 Months)';
+    
+    protected static ?int $sort = 3;
 
     protected function getData(): array
     {
-        $goals = Goal::withCount('participants')->get();
+        $enrollments = [];
+        $labels = [];
+        
+        // Get enrollment data for last 6 months
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $count = ParticipantCourseProgress::whereYear('enrollment_date', $month->year)
+                ->whereMonth('enrollment_date', $month->month)
+                ->count();
+            
+            $enrollments[] = $count;
+            $labels[] = $month->format('M Y');
+        }
         
         return [
             'datasets' => [
                 [
-                    'label' => 'Participants',
-                    'data' => $goals->pluck('participants_count')->toArray(),
-                    'backgroundColor' => [
-                        '#FF6384',
-                        '#36A2EB', 
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF',
-                    ],
+                    'label' => 'New Enrollments',
+                    'data' => $enrollments,
+                    'borderColor' => '#3b82f6',
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                    'fill' => true,
                 ],
             ],
-            'labels' => $goals->pluck('name')->toArray(),
+            'labels' => $labels,
         ];
     }
 
     protected function getType(): string
     {
-        return 'doughnut';
+        return 'line';
+    }
+    
+    protected function getOptions(): array
+    {
+        return [
+            'plugins' => [
+                'legend' => [
+                    'display' => false,
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'beginAtZero' => true,
+                    'ticks' => [
+                        'stepSize' => 1,
+                    ],
+                ],
+            ],
+        ];
     }
 }

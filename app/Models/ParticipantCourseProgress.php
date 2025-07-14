@@ -24,13 +24,18 @@ class ParticipantCourseProgress extends Model
         'total_tests',
         'tests_taken',
         'tests_passed',
-        'average_score'
+        'average_score',
+        'total_exams',
+        'exams_taken',
+        'exams_needed',
+        'last_exam_date',
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
         'started_at' => 'date',
         'completed_at' => 'date',
+        'last_exam_date' => 'date',
         'progress_percentage' => 'decimal:2',
         'grade' => 'decimal:2',
         'average_score' => 'decimal:2',

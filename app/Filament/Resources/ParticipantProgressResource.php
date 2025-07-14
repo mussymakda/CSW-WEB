@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ParticipantProgressResource\Pages;
+use App\Filament\Resources\ParticipantProgressResource\Pages\ImportParticipantProgress;
 use App\Models\ParticipantCourseProgress;
 use App\Models\Participant;
 use App\Models\CourseBatch;
@@ -82,21 +83,49 @@ class ParticipantProgressResource extends Resource
                 Tables\Columns\TextColumn::make('courseBatch.batch_name')
                     ->label('Batch')
                     ->searchable(),
-                Tables\Columns\ProgressColumn::make('progress_percentage')
-                    ->label('Progress'),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'enrolled',
-                        'info' => 'active',
-                        'success' => 'completed',
-                        'secondary' => 'paused',
-                        'danger' => 'dropped',
-                    ]),
+                Tables\Columns\TextColumn::make('progress_percentage')
+                    ->label('Progress')
+                    ->formatStateUsing(fn ($state) => $state . '%')
+                    ->badge()
+                    ->color(fn ($state) => match (true) {
+                        $state >= 80 => 'success',
+                        $state >= 60 => 'warning',
+                        $state >= 40 => 'info',
+                        default => 'danger',
+                    }),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'enrolled' => 'warning',
+                        'active' => 'info',
+                        'completed' => 'success',
+                        'paused' => 'gray',
+                        'dropped' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('enrollment_date')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('grade')
                     ->suffix(' pts')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('exams_taken')
+                    ->label('Exams')
+                    ->formatStateUsing(fn ($record) => $record->exams_taken . '/' . $record->total_exams)
+                    ->badge()
+                    ->color(function ($record) {
+                        if (!$record->total_exams) return 'gray';
+                        $ratio = $record->exams_taken / $record->total_exams;
+                        return match (true) {
+                            $ratio >= 0.8 => 'success',
+                            $ratio >= 0.6 => 'warning',
+                            $ratio >= 0.4 => 'info',
+                            default => 'danger',
+                        };
+                    }),
+                Tables\Columns\TextColumn::make('last_exam_date')
+                    ->label('Last Exam')
+                    ->date()
                     ->sortable(),
             ])
             ->filters([
@@ -135,6 +164,7 @@ class ParticipantProgressResource extends Resource
         return [
             'index' => Pages\ListParticipantProgress::route('/'),
             'create' => Pages\CreateParticipantProgress::route('/create'),
+            // 'import' => ImportParticipantProgress::route('/import'),
             'view' => Pages\ViewParticipantProgress::route('/{record}'),
             'edit' => Pages\EditParticipantProgress::route('/{record}/edit'),
         ];

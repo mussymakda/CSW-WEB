@@ -1,0 +1,6 @@
+Student Number,Student Name,Student Personal Email,Student Phone Number,Student Location,Program Description,Enrollment Date,Exams Completed %,Total Exams,Exams Taken,Exams Needed,Student Status,Client Name
+STU001,John Smith,john.smith@email.com,555-0101,New York,Web Development Bootcamp,1/15/2024,75%,20,15,5,active,Tech Corp
+STU002,Jane Doe,jane.doe@email.com,555-0102,California,Data Science Program,2/1/2024,90%,25,23,2,active,Data Inc
+STU003,Mike Johnson,mike.j@email.com,555-0103,Texas,Cybersecurity Course,1/20/2024,60%,15,9,6,enrolled,Security LLC
+STU004,Sarah Wilson,sarah.w@email.com,555-0104,Florida,Digital Marketing,3/1/2024,100%,18,18,0,completed,Marketing Co
+STU005,David Brown,david.b@email.com,555-0105,Illinois,UX/UI Design,2/15/2024,45%,22,10,12,active,Design Studio

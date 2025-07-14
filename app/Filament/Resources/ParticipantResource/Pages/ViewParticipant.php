@@ -68,7 +68,7 @@ class ViewParticipant extends ViewRecord
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Course Progress Overview')
+                Infolists\Components\Section::make('Course & Exam Overview')
                     ->schema([
                         Infolists\Components\TextEntry::make('total_courses')
                             ->label('Total Enrolled Courses')
@@ -77,12 +77,12 @@ class ViewParticipant extends ViewRecord
                             ->color('info'),
                         Infolists\Components\TextEntry::make('completed_courses')
                             ->label('Completed Courses')
-                            ->getStateUsing(fn ($record) => $record->courseProgress()->where('status', 'completed')->count())
+                            ->getStateUsing(fn ($record) => $record->courseProgress()->where('progress_percentage', 100)->count())
                             ->badge()
                             ->color('success'),
                         Infolists\Components\TextEntry::make('active_courses')
                             ->label('Active Courses')
-                            ->getStateUsing(fn ($record) => $record->courseProgress()->whereIn('status', ['enrolled', 'active'])->count())
+                            ->getStateUsing(fn ($record) => $record->courseProgress()->where('progress_percentage', '<', 100)->count())
                             ->badge()
                             ->color('warning'),
                         Infolists\Components\TextEntry::make('average_progress')
@@ -91,244 +91,141 @@ class ViewParticipant extends ViewRecord
                             ->badge()
                             ->color('primary'),
                     ])
-                    ->columns(4),                Infolists\Components\Section::make('Current Course Details')
+                    ->columns(4),
+
+                Infolists\Components\Section::make('Current Course Details')
                     ->schema([
                         Infolists\Components\TextEntry::make('current_course_name')
-                            ->label('Course Name')
+                            ->label('Program')
                             ->getStateUsing(function ($record) {
                                 $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->with('courseBatch.course')
+                                    ->where('progress_percentage', '<', 100)
+                                    ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                return $current ? $current->courseBatch->course->name : 'No active course';
+                                return $current ? $record->program_description : 'No active course';
                             })
                             ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
                             ->weight('bold'),
-                        Infolists\Components\TextEntry::make('current_batch')
-                            ->label('Batch')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->with('courseBatch')
-                                    ->first();
-                                return $current ? $current->courseBatch->batch_name : 'N/A';
-                            })
+                        Infolists\Components\TextEntry::make('student_number')
+                            ->label('Student Number')
+                            ->getStateUsing(fn ($record) => $record->student_number)
                             ->badge()
                             ->color('info'),
                         Infolists\Components\TextEntry::make('enrollment_date')
                             ->label('Enrollment Date')
                             ->getStateUsing(function ($record) {
                                 $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
+                                    ->orderBy('enrollment_date', 'desc')
                                     ->first();
                                 return $current ? $current->enrollment_date->format('M d, Y') : 'N/A';
                             })
                             ->icon('heroicon-m-calendar-days'),
-                        Infolists\Components\TextEntry::make('course_status')
+                        Infolists\Components\TextEntry::make('student_status')
                             ->label('Status')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                return $current ? ucfirst($current->status) : 'N/A';
-                            })
+                            ->getStateUsing(fn ($record) => $record->status ?? 'Active')
                             ->badge()
                             ->color(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                if (!$current) return 'gray';
-                                return match ($current->status) {
-                                    'completed' => 'success',
-                                    'active' => 'info',
-                                    'enrolled' => 'warning',
-                                    'paused' => 'gray',
-                                    'dropped' => 'danger',
+                                $status = $record->status ?? 'active';
+                                return match (strtolower($status)) {
+                                    'completed', 'graduated' => 'success',
+                                    'active', 'enrolled' => 'info',
+                                    'paused' => 'warning',
+                                    'dropped', 'inactive' => 'danger',
                                     default => 'gray',
                                 };
                             }),
                     ])
                     ->columns(2)
-                    ->visible(fn ($record) => $record->courseProgress()->whereIn('status', ['enrolled', 'active'])->exists()),
+                    ->visible(fn ($record) => $record->courseProgress()->exists()),
 
-                Infolists\Components\Section::make('Progress Tracking')
+                Infolists\Components\Section::make('Exam Progress Details')
                     ->schema([
-                        Infolists\Components\TextEntry::make('test_progress')
-                            ->label('Test Progress')
+                        Infolists\Components\TextEntry::make('completion_percentage')
+                            ->label('Completion Percentage')
                             ->getStateUsing(function ($record) {
                                 $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
+                                    ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                if (!$current) return 'No active course';
-                                return $current->tests_passed . ' / ' . $current->total_tests . ' tests passed (' . $current->test_progress_percentage . '%)';
-                            })
-                            ->icon('heroicon-m-academic-cap')
-                            ->badge()
-                            ->color(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                if (!$current) return 'gray';
-                                $progress = $current->test_progress_percentage;
-                                return match (true) {
-                                    $progress >= 80 => 'success',
-                                    $progress >= 60 => 'warning',
-                                    $progress >= 40 => 'info',
-                                    default => 'danger',
-                                };
-                            }),
-                        Infolists\Components\TextEntry::make('time_progress')
-                            ->label('Time Progress')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                if (!$current) return 'No active course';
-                                return $current->time_progress_percentage . '% of course duration completed';
-                            })
-                            ->icon('heroicon-m-clock')
-                            ->badge()
-                            ->color(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                if (!$current) return 'gray';
-                                $progress = $current->time_progress_percentage;
-                                return match (true) {
-                                    $progress >= 80 => 'success',
-                                    $progress >= 60 => 'warning',
-                                    $progress >= 40 => 'info',
-                                    default => 'danger',
-                                };
-                            }),
-                        Infolists\Components\TextEntry::make('overall_progress')
-                            ->label('Overall Progress')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                if (!$current) return 'No active course';
-                                return $current->overall_progress . '% (Combined test & time progress)';
+                                return $current ? $current->progress_percentage . '%' : 'No data';
                             })
                             ->icon('heroicon-m-chart-bar')
                             ->badge()
                             ->color(function ($record) {
                                 $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
+                                    ->orderBy('enrollment_date', 'desc')
                                     ->first();
                                 if (!$current) return 'gray';
-                                $progress = $current->overall_progress;
+                                $progress = $current->progress_percentage;
                                 return match (true) {
-                                    $progress >= 80 => 'success',
-                                    $progress >= 60 => 'warning',
-                                    $progress >= 40 => 'info',
+                                    $progress >= 90 => 'success',
+                                    $progress >= 70 => 'warning',
+                                    $progress >= 50 => 'info',
                                     default => 'danger',
                                 };
                             }),
-                        Infolists\Components\TextEntry::make('average_score')
-                            ->label('Average Test Score')
+                        Infolists\Components\TextEntry::make('total_exams')
+                            ->label('Total Exams')
                             ->getStateUsing(function ($record) {
                                 $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
+                                    ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                if (!$current || !$current->average_score) return 'No scores yet';
-                                return number_format($current->average_score, 1) . '% average';
+                                return $current ? $current->total_exams : 'No data';
                             })
-                            ->icon('heroicon-m-star')
+                            ->icon('heroicon-m-document-text')
+                            ->badge()
+                            ->color('info'),
+                        Infolists\Components\TextEntry::make('exams_taken')
+                            ->label('Exams Taken')
+                            ->getStateUsing(function ($record) {
+                                $current = $record->courseProgress()
+                                    ->orderBy('enrollment_date', 'desc')
+                                    ->first();
+                                return $current ? $current->exams_taken : 'No data';
+                            })
+                            ->icon('heroicon-m-document-check')
+                            ->badge()
+                            ->color('primary'),
+                        Infolists\Components\TextEntry::make('exams_needed')
+                            ->label('Exams Remaining')
+                            ->getStateUsing(function ($record) {
+                                $current = $record->courseProgress()
+                                    ->orderBy('enrollment_date', 'desc')
+                                    ->first();
+                                return $current ? $current->exams_needed : 'No data';
+                            })
+                            ->icon('heroicon-m-clipboard-document-list')
                             ->badge()
                             ->color(function ($record) {
                                 $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
+                                    ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                if (!$current || !$current->average_score) return 'gray';
-                                $score = $current->average_score;
-                                return match (true) {
-                                    $score >= 90 => 'success',
-                                    $score >= 80 => 'warning',
-                                    $score >= 70 => 'info',
-                                    default => 'danger',
-                                };
+                                if (!$current || !$current->exams_needed) return 'success';
+                                return $current->exams_needed <= 3 ? 'warning' : 'info';
                             }),
                     ])
                     ->columns(2)
-                    ->visible(fn ($record) => $record->courseProgress()->whereIn('status', ['enrolled', 'active'])->exists()),
+                    ->visible(fn ($record) => $record->courseProgress()->exists()),
 
-                Infolists\Components\Section::make('Course Timeline')
+                Infolists\Components\Section::make('Additional Information')
                     ->schema([
-                        Infolists\Components\TextEntry::make('course_start_date')
-                            ->label('Course Start Date')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->with('courseBatch')
-                                    ->first();
-                                return $current ? $current->courseBatch->start_date->format('M d, Y') : 'N/A';
-                            })
-                            ->icon('heroicon-m-play'),
-                        Infolists\Components\TextEntry::make('course_end_date')
-                            ->label('Course End Date')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->with('courseBatch')
-                                    ->first();
-                                return $current ? $current->courseBatch->end_date->format('M d, Y') : 'N/A';
-                            })
-                            ->icon('heroicon-m-flag'),
-                        Infolists\Components\TextEntry::make('days_enrolled')
-                            ->label('Days Enrolled')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                return $current ? $current->days_enrolled . ' days' : 'N/A';
-                            })
-                            ->icon('heroicon-m-calendar'),
-                        Infolists\Components\TextEntry::make('days_remaining')
-                            ->label('Days Remaining')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                return $current && $current->days_remaining ? $current->days_remaining . ' days' : 'Course ended';
-                            })
-                            ->icon('heroicon-m-clock')
-                            ->color(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                if (!$current || !$current->days_remaining) return 'gray';
-                                return $current->days_remaining <= 7 ? 'danger' : 'primary';
-                            }),                    ])
-                    ->columns(2)
-                    ->visible(fn ($record) => $record->courseProgress()->whereIn('status', ['enrolled', 'active'])->exists()),
-
-                Infolists\Components\Section::make('Visual Progress Overview')
-                    ->schema([
-                        Infolists\Components\ViewEntry::make('progress_bars')
-                            ->label('')
-                            ->view('filament.infolists.progress-overview')
-                            ->getStateUsing(function ($record) {
-                                $current = $record->courseProgress()
-                                    ->whereIn('status', ['enrolled', 'active'])
-                                    ->first();
-                                
-                                if (!$current) {
-                                    return null;
-                                }
-                                
-                                return [
-                                    'test_progress' => $current->test_progress_percentage,
-                                    'time_progress' => $current->time_progress_percentage,
-                                    'overall_progress' => $current->overall_progress,
-                                    'tests_passed' => $current->tests_passed,
-                                    'total_tests' => $current->total_tests,
-                                    'tests_taken' => $current->tests_taken,
-                                    'average_score' => $current->average_score,
-                                ];
-                            }),
+                        Infolists\Components\TextEntry::make('client_name')
+                            ->label('Client')
+                            ->getStateUsing(fn ($record) => $record->client_name ?? 'Not specified')
+                            ->icon('heroicon-m-building-office'),
+                        Infolists\Components\TextEntry::make('graduation_date')
+                            ->label('Expected Graduation')
+                            ->getStateUsing(fn ($record) => $record->graduation_date ? $record->graduation_date->format('M d, Y') : 'Not set')
+                            ->icon('heroicon-m-academic-cap'),
+                        Infolists\Components\TextEntry::make('created_at')
+                            ->label('Account Created')
+                            ->dateTime('M d, Y g:i A')
+                            ->icon('heroicon-m-user-plus'),
+                        Infolists\Components\TextEntry::make('updated_at')
+                            ->label('Last Updated')
+                            ->dateTime('M d, Y g:i A')
+                            ->icon('heroicon-m-clock'),
                     ])
-                    ->visible(fn ($record) => $record->courseProgress()->whereIn('status', ['enrolled', 'active'])->exists()),
+                    ->columns(2),
             ]);
     }
 }

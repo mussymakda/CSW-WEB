@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ParticipantController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\Slider;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -14,6 +15,21 @@ Route::apiResource('participants', ParticipantController::class);
 // Goals API endpoint (read-only for app users)
 Route::get('goals', function () {
     return response()->json(\App\Models\Goal::all());
+});
+
+// Mobile Sliders API endpoint
+Route::get('sliders', function () {
+    $sliders = Slider::active()
+        ->current()
+        ->ordered()
+        ->select(['id', 'title', 'description', 'image_url', 'link_url', 'link_text'])
+        ->get();
+    
+    return response()->json([
+        'success' => true,
+        'data' => $sliders,
+        'count' => $sliders->count()
+    ]);
 });
 
 // Daily schedules for a specific participant

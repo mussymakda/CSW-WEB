@@ -14,6 +14,11 @@ class ListParticipantProgress extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('import')
+                ->label('Import Progress Data')
+                ->icon('heroicon-o-document-arrow-up')
+                ->color('success')
+                ->url('/admin/import-participant-progress'),
         ];
     }
 }

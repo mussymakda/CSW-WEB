@@ -38,6 +38,8 @@ class CSWAdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\DashboardStatsWidget::class,
+                \App\Filament\Widgets\ParticipantProgressStats::class,
+                \App\Filament\Widgets\StudentProgressChart::class,
                 \App\Filament\Widgets\ParticipantsChart::class,
                 \App\Filament\Widgets\NotificationStatsWidget::class,
             ])

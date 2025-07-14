@@ -51,22 +51,84 @@ class ParticipantResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('student_number')
+                    ->label('Student #')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->weight('semibold'),
+                Tables\Columns\TextColumn::make('program_description')
+                    ->label('Program')
+                    ->searchable()
+                    ->limit(30)
+                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                        $state = $column->getState();
+                        if (strlen($state) <= 30) {
+                            return null;
+                        }
+                        return $state;
+                    }),
+                Tables\Columns\TextColumn::make('courseProgress.progress_percentage')
+                    ->label('Progress')
+                    ->formatStateUsing(fn ($state) => $state ? $state . '%' : 'No data')
+                    ->badge()
+                    ->color(fn ($state) => match (true) {
+                        $state >= 90 => 'success',
+                        $state >= 70 => 'warning',
+                        $state >= 50 => 'info',
+                        default => 'danger',
+                    }),
+                Tables\Columns\TextColumn::make('courseProgress.exams_taken')
+                    ->label('Exams Taken')
+                    ->formatStateUsing(function ($record) {
+                        $progress = $record->courseProgress()->orderBy('enrollment_date', 'desc')->first();
+                        if (!$progress) return 'No data';
+                        return $progress->exams_taken . '/' . $progress->total_exams;
+                    })
+                    ->badge()
+                    ->color('primary'),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match (strtolower($state)) {
+                        'completed', 'graduated' => 'success',
+                        'active', 'enrolled' => 'info',
+                        'paused' => 'warning',
+                        'dropped', 'inactive' => 'danger',
+                        default => 'gray',
+                    })
+                    ->default('Active'),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone'),
-                Tables\Columns\TextColumn::make('goal.name')
-                    ->label('Goal'),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('phone')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime(),
+                    ->label('Registered')
+                    ->dateTime('M j, Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'active' => 'Active',
+                        'completed' => 'Completed',
+                        'paused' => 'Paused',
+                        'dropped' => 'Dropped',
+                    ]),
+                Tables\Filters\Filter::make('has_progress')
+                    ->label('Has Course Progress')
+                    ->query(fn ($query) => $query->whereHas('courseProgress'))
+                    ->toggle(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
