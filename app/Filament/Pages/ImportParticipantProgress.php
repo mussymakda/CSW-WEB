@@ -326,7 +326,7 @@ class ImportParticipantProgress extends Page
         $enrollmentDateParsed = $this->parseDate($enrollmentDate);
         if (!$enrollmentDateParsed) {
             // If no enrollment date provided, use today or estimate based on progress
-            $enrollmentDateParsed = now()->subDays(30); // Default to 30 days ago
+            $enrollmentDateParsed = Carbon::now()->subDays(30); // Default to 30 days ago
         }
 
         $progressData = [
@@ -341,7 +341,7 @@ class ImportParticipantProgress extends Page
             'started_at' => $enrollmentDateParsed,
             'completed_at' => $status === 'completed' ? $this->parseDate($graduationDate) : null,
             'grade' => $this->calculateGrade($progressPercentage),
-            'notes' => "Program: {$programDescription} | Imported from CSV on " . now()->format('Y-m-d H:i:s'),
+            'notes' => "Program: {$programDescription} | Imported from CSV on " . date('Y-m-d H:i:s'),
             'updated_at' => now(),
         ];
 
@@ -384,33 +384,31 @@ class ImportParticipantProgress extends Page
         }
 
         try {
-            // Common Excel date formats
-            $formats = [
-                'm/d/Y',    // 12/31/2024
-                'n/j/Y',    // 1/5/2024 (no leading zeros)
-                'm-d-Y',    // 12-31-2024
-                'd/m/Y',    // 31/12/2024 (European)
-                'd-m-Y',    // 31-12-2024
-                'Y-m-d',    // 2024-12-31 (ISO)
-                'm/d/y',    // 12/31/24
-                'n/j/y',    // 1/5/24
-            ];
-            
             $dateString = trim($dateString);
             
-            foreach ($formats as $format) {
-                try {
-                    $date = Carbon::createFromFormat($format, $dateString);
-                    if ($date !== false && $date->format($format) === $dateString) {
-                        return $date;
-                    }
-                } catch (\Exception $e) {
-                    continue;
-                }
+            // Try to parse with native PHP DateTime first (doesn't need intl)
+            // This handles most common formats automatically
+            $phpDate = \DateTime::createFromFormat('m/d/Y', $dateString) ?: 
+                      \DateTime::createFromFormat('n/j/Y', $dateString) ?: 
+                      \DateTime::createFromFormat('m-d-Y', $dateString) ?: 
+                      \DateTime::createFromFormat('d/m/Y', $dateString) ?: 
+                      \DateTime::createFromFormat('Y-m-d', $dateString) ?: 
+                      \DateTime::createFromFormat('m/d/y', $dateString);
+            
+            if ($phpDate !== false) {
+                // Convert to Carbon for Laravel compatibility
+                return Carbon::instance($phpDate);
             }
             
-            // Try Carbon's built-in parsing as last resort
+            // Try strtotime as fallback (handles many formats)
+            $timestamp = strtotime($dateString);
+            if ($timestamp !== false) {
+                return Carbon::createFromTimestamp($timestamp);
+            }
+            
+            // Last resort: try Carbon parse (might work without intl for simple formats)
             return Carbon::parse($dateString);
+            
         } catch (\Exception $e) {
             // Log the problematic date for debugging
             Log::warning("Could not parse date: {$dateString}");

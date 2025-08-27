@@ -25,7 +25,7 @@ class ParticipantsChart extends ChartWidget
                 ->count();
             
             $enrollments[] = $count;
-            $labels[] = $month->format('M Y');
+            $labels[] = $month->year . '-' . str_pad($month->month, 2, '0', STR_PAD_LEFT);
         }
         
         return [

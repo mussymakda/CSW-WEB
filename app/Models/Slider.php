@@ -37,7 +37,7 @@ class Slider extends Model
     // Scope for current sliders (within date range)
     public function scopeCurrent($query)
     {
-        $now = Carbon::now()->toDateString();
+        $now = date('Y-m-d');
         return $query->where(function ($q) use ($now) {
             $q->whereNull('start_date')
               ->orWhere('start_date', '<=', $now);
@@ -60,7 +60,7 @@ class Slider extends Model
             return false;
         }
 
-        $now = Carbon::now()->toDateString();
+        $now = date('Y-m-d');
         
         if ($this->start_date && $this->start_date > $now) {
             return false;

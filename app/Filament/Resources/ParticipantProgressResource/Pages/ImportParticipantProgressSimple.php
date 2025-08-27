@@ -219,7 +219,7 @@ class ImportParticipantProgressSimple extends Page
                 'completed_at' => $status === 'completed' ? $this->parseDate($graduationDate) : null,
                 'grade' => $this->calculateGrade($progressPercentage),
                 'last_exam_date' => $this->parseDate($lastExamDate),
-                'notes' => "Imported from Excel on " . now()->format('Y-m-d H:i:s'),
+                'notes' => "Imported from Excel on " . date('Y-m-d H:i:s'),
                 'updated_at' => now(),
             ];
 

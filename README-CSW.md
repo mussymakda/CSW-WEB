@@ -1,5 +1,57 @@
 # CSW Web - Participant Management System
 
+## 🚀 Quick Start (No XAMPP Required!)
+
+### Prerequisites
+- PHP 8.1 or higher
+- Composer
+- Node.js & NPM
+
+### Optional Extensions
+- `intl` PHP extension (for advanced date formatting - not required)
+
+### Easy Development Setup
+
+1. **Clone and Setup**
+   ```bash
+   git clone <repository-url>
+   cd CSW-WEB
+   composer install
+   npm install
+   ```
+
+2. **One-Command Setup** (Windows)
+   ```bash
+   ./start-dev.bat         # Command Prompt
+   ./start-dev.ps1         # PowerShell
+   ```
+
+3. **Access the Application**
+   - **Admin Panel**: http://127.0.0.1:8000/admin
+   - **Login**: admin@csw.com / password
+
+## 🌟 What Changed - No More XAMPP!
+
+This project now uses:
+- **SQLite Database** - File-based, no server setup needed
+- **Built-in PHP Server** - `php artisan serve`
+- **Automatic Setup Scripts** - One command to get started
+- **Simple Development** - No complex server configuration
+
+## 📊 Features
+
+### Excel Import System
+- Upload participant progress data via CSV/Excel
+- Handles duplicate emails gracefully
+- Batch processing for large files
+- Real-time error reporting and validation
+
+### Admin Dashboard
+- Participant management with progress tracking
+- Analytics widgets showing completion rates
+- Mobile app slider management
+- Course and batch management
+
 ## Overview
 This system manages participants for a fitness/wellness application with goals and daily schedules.
 

@@ -124,7 +124,7 @@
             
             <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg mb-4">
                 <p class="text-sm text-orange-800 dark:text-orange-200">
-                    <strong>Enrollment Date:</strong> If the "Enrollment Date" field is empty or invalid, the system will automatically set it to 30 days ago as a fallback. Please ensure your dates are in a common format like MM/DD/YYYY or DD/MM/YYYY.
+                    <strong>Enrollment Date:</strong> If the "Enrollment Date" field is empty or invalid, the system will automatically set it to 30 days ago as a fallback. Supports formats like MM/DD/YYYY, M/D/YYYY, MM-DD-YYYY, and YYYY-MM-DD.
                 </p>
             </div>
             

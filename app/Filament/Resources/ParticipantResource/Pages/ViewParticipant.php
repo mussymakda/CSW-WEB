@@ -117,7 +117,7 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                return $current ? $current->enrollment_date->format('M d, Y') : 'N/A';
+                                return $current ? $current->enrollment_date->toDateString() : 'N/A';
                             })
                             ->icon('heroicon-m-calendar-days'),
                         Infolists\Components\TextEntry::make('student_status')
@@ -214,7 +214,7 @@ class ViewParticipant extends ViewRecord
                             ->icon('heroicon-m-building-office'),
                         Infolists\Components\TextEntry::make('graduation_date')
                             ->label('Expected Graduation')
-                            ->getStateUsing(fn ($record) => $record->graduation_date ? $record->graduation_date->format('M d, Y') : 'Not set')
+                            ->getStateUsing(fn ($record) => $record->graduation_date ? $record->graduation_date->toDateString() : 'Not set')
                             ->icon('heroicon-m-academic-cap'),
                         Infolists\Components\TextEntry::make('created_at')
                             ->label('Account Created')

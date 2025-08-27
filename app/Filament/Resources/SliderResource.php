@@ -115,12 +115,12 @@ class SliderResource extends Resource
                     ->placeholder('No link'),
                 Tables\Columns\TextColumn::make('start_date')
                     ->label('Start')
-                    ->date('M j, Y')
+                    ->date()
                     ->sortable()
                     ->placeholder('No start date'),
                 Tables\Columns\TextColumn::make('end_date')
                     ->label('End')
-                    ->date('M j, Y')
+                    ->date()
                     ->sortable()
                     ->placeholder('No end date'),
                 Tables\Columns\IconColumn::make('is_active')
@@ -135,7 +135,7 @@ class SliderResource extends Resource
                     ->sortable()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime('M j, Y g:i A')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
