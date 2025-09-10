@@ -13,6 +13,8 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // The root route redirects to /admin, which requires authentication
+        // So we expect a redirect (302) not a 200 status
+        $response->assertRedirect('/admin');
     }
 }
