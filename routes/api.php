@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\ParticipantController;
+use App\Services\OllamaService;
+use App\Services\AINotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Slider;
@@ -30,6 +32,51 @@ Route::get('sliders', function () {
         'data' => $sliders,
         'count' => $sliders->count()
     ]);
+});
+
+// AI Notifications API
+Route::prefix('ai')->group(function () {
+    // Generate AI notification for specific participant
+    Route::post('notifications/generate/{participant}', function (Request $request, $participantId, AINotificationService $aiService) {
+        $participant = \App\Models\Participant::findOrFail($participantId);
+        
+        $type = $request->input('type', null);
+        $extraVariables = $request->input('variables', []);
+        
+        if ($type) {
+            $notification = $aiService->generateSpecificNotification($participant, $type, $extraVariables);
+        } else {
+            $notification = $aiService->generateParticipantNotification($participant);
+        }
+        
+        if ($notification) {
+            return response()->json([
+                'success' => true,
+                'notification' => $notification,
+                'message' => 'AI notification generated successfully'
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to generate AI notification'
+        ], 500);
+    });
+    
+    // Check Ollama status
+    Route::get('status', function (OllamaService $ollamaService) {
+        return response()->json([
+            'available' => $ollamaService->isAvailable(),
+            'enabled' => config('ollama.enabled'),
+            'host' => config('ollama.host'),
+            'model' => config('ollama.model'),
+        ]);
+    });
+    
+    // Get AI notification statistics
+    Route::get('stats', function (AINotificationService $aiService) {
+        return response()->json($aiService->getStatistics());
+    });
 });
 
 // Daily schedules for a specific participant

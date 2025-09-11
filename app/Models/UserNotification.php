@@ -14,6 +14,7 @@ class UserNotification extends Model
         'notification_text',
         'participant_id',
         'is_read',
+        'notification_type', // Add this field
     ];
 
     protected $casts = [

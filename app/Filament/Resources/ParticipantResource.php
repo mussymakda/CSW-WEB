@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ParticipantResource\Pages;
+use App\Filament\Resources\ParticipantResource\RelationManagers;
 use App\Models\Participant;
 use Filament\Forms;
 use Filament\Resources\Resource;
@@ -140,7 +141,7 @@ class ParticipantResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\DailySchedulesRelationManager::class,
         ];
     }
 
