@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ParticipantController;
 use App\Services\OllamaService;
 use App\Services\AINotificationService;
@@ -7,16 +8,62 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Slider;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Authentication routes (public)
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
-// Participant API routes
+// Onboarding routes (public - for first-time login)
+Route::post('/onboarding/send-otp', [App\Http\Controllers\Api\OnboardingController::class, 'sendOtp']);
+Route::post('/onboarding/verify-otp', [App\Http\Controllers\Api\OnboardingController::class, 'verifyOtp']);
+
+// Protected routes (require authentication)
+Route::middleware('auth:sanctum')->group(function () {
+    // Auth routes
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/auth/profile', [AuthController::class, 'profile']);
+    
+    // Onboarding routes (authenticated)
+    Route::prefix('onboarding')->group(function () {
+        Route::get('/status', [App\Http\Controllers\Api\OnboardingController::class, 'getOnboardingStatus']);
+        Route::post('/accept-terms', [App\Http\Controllers\Api\OnboardingController::class, 'acceptTerms']);
+        Route::post('/update-profile', [App\Http\Controllers\Api\OnboardingController::class, 'updateProfile']);
+        Route::post('/update-profile-picture', [App\Http\Controllers\Api\OnboardingController::class, 'updateProfilePicture']);
+        Route::post('/select-goals', [App\Http\Controllers\Api\OnboardingController::class, 'selectGoals']);
+        Route::post('/update-weight', [App\Http\Controllers\Api\OnboardingController::class, 'updateWeight']);
+        Route::post('/update-height', [App\Http\Controllers\Api\OnboardingController::class, 'updateHeight']);
+        Route::post('/complete', [App\Http\Controllers\Api\OnboardingController::class, 'completeOnboarding']);
+    });
+    
+    // Goals API endpoints
+    Route::get('/goals', [App\Http\Controllers\Api\GoalController::class, 'index']);
+    Route::get('/goals/{goalId}', [App\Http\Controllers\Api\GoalController::class, 'show']);
+    
+    // User profile routes (for Flutter app)
+    Route::prefix('user')->group(function () {
+        Route::get('/profile', [App\Http\Controllers\Api\UserController::class, 'getProfile']);
+        Route::put('/profile', [App\Http\Controllers\Api\UserController::class, 'updateProfile']);
+        Route::post('/profile/picture', [App\Http\Controllers\Api\UserController::class, 'updateProfilePicture']);
+        Route::delete('/profile/picture', [App\Http\Controllers\Api\UserController::class, 'deleteProfilePicture']);
+        Route::get('/setup-data', [App\Http\Controllers\Api\UserController::class, 'getAccountSetupData']);
+    });
+});
+
+// Admin API routes (for Filament panel)
 Route::apiResource('participants', ParticipantController::class);
 
-// Goals API endpoint (read-only for app users)
-Route::get('goals', function () {
-    return response()->json(\App\Models\Goal::all());
+// Mobile app API routes (require authentication)
+Route::middleware('auth:sanctum')->prefix('mobile')->group(function () {
+    Route::get('/schedule', [App\Http\Controllers\Api\MobileController::class, 'getSchedule']);
+    Route::get('/progress-card', [App\Http\Controllers\Api\MobileController::class, 'getProgressCard']);
+    Route::get('/sliders', [App\Http\Controllers\Api\MobileController::class, 'getSliders']);
+    Route::get('/suggested-workouts', [App\Http\Controllers\Api\MobileController::class, 'getSuggestedWorkouts']);
+    Route::get('/guidance-tips', [App\Http\Controllers\Api\MobileController::class, 'getGuidanceTips']);
+    Route::get('/workout-details/{subcategoryId}', [App\Http\Controllers\Api\MobileController::class, 'getWorkoutDetails']);
+    Route::post('/log-video-view', [App\Http\Controllers\Api\MobileController::class, 'logVideoView']);
+    Route::get('/workout-history', [App\Http\Controllers\Api\MobileController::class, 'getWorkoutHistory']);
+    Route::get('/notifications', [App\Http\Controllers\Api\MobileController::class, 'getNotifications']);
+    Route::post('/contact-us', [App\Http\Controllers\Api\MobileController::class, 'contactUs']);
 });
 
 // Mobile Sliders API endpoint

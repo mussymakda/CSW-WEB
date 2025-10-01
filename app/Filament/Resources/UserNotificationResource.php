@@ -3,15 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserNotificationResource\Pages;
-use App\Filament\Resources\UserNotificationResource\RelationManagers;
 use App\Models\UserNotification;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserNotificationResource extends Resource
 {
@@ -47,6 +44,8 @@ class UserNotificationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('participant'))
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Tables\Columns\TextColumn::make('icon')
                     ->badge()
@@ -58,6 +57,7 @@ class UserNotificationResource extends Resource
                         if (strlen($state) <= 50) {
                             return null;
                         }
+
                         return $state;
                     }),
                 Tables\Columns\TextColumn::make('participant.name')

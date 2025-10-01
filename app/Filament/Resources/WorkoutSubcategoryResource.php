@@ -10,8 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WorkoutSubcategoryResource extends Resource
 {
@@ -34,7 +32,15 @@ class WorkoutSubcategoryResource extends Resource
                 Forms\Components\FileUpload::make('image')
                     ->image()
                     ->disk('public')
-                    ->directory('workout-subcategories'),
+                    ->directory('workout-subcategories')
+                    ->imageResizeMode('cover')
+                    ->imageResizeTargetWidth('400')
+                    ->imageResizeTargetHeight('300')
+                    ->maxSize(5120)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->removeUploadedFileButtonPosition('right')
+                    ->uploadButtonPosition('left')
+                    ->previewable(false),
                 Forms\Components\Select::make('goals')
                     ->label('Associated Goals')
                     ->multiple()
@@ -46,6 +52,7 @@ class WorkoutSubcategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->withCount('workoutVideos'))
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
@@ -56,9 +63,11 @@ class WorkoutSubcategoryResource extends Resource
                         if (strlen($state) <= 50) {
                             return null;
                         }
+
                         return $state;
                     }),
                 Tables\Columns\ImageColumn::make('image')
+                    ->disk('public')
                     ->disk('public')
                     ->size(50),
                 Tables\Columns\TextColumn::make('goals.name')

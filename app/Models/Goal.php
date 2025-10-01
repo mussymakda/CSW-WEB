@@ -26,6 +26,14 @@ class Goal extends Model
         return $this->hasMany(Participant::class);
     }
 
+    /**
+     * Many-to-many relationship with participants (for multiple goal selection)
+     */
+    public function participantsWithGoals()
+    {
+        return $this->belongsToMany(Participant::class, 'participant_goal');
+    }
+
     public function workoutSubcategories()
     {
         return $this->belongsToMany(WorkoutSubcategory::class);

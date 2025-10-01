@@ -3,15 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\GoalResource\Pages;
-use App\Filament\Resources\GoalResource\RelationManagers;
 use App\Models\Goal;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class GoalResource extends Resource
 {
@@ -31,7 +28,15 @@ class GoalResource extends Resource
                 Forms\Components\FileUpload::make('display_image')
                     ->image()
                     ->disk('public')
-                    ->directory('goals'),
+                    ->directory('goals')
+                    ->imageResizeMode('cover')
+                    ->imageResizeTargetWidth('300')
+                    ->imageResizeTargetHeight('200')
+                    ->maxSize(5120)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->removeUploadedFileButtonPosition('right')
+                    ->uploadButtonPosition('left')
+                    ->previewable(false),
             ]);
     }
 
@@ -42,6 +47,7 @@ class GoalResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('display_image')
+                    ->disk('public')
                     ->disk('public')
                     ->size(50),
                 Tables\Columns\TextColumn::make('participants_count')

@@ -19,38 +19,96 @@ class ParticipantResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required(),
-                Forms\Components\TextInput::make('phone'),
-                Forms\Components\DatePicker::make('dob')
-                    ->label('Date of Birth'),
-                Forms\Components\FileUpload::make('profile_picture')
-                    ->disk('public')
-                    ->directory('profiles'),
-                Forms\Components\Select::make('gender')
-                    ->options([
-                        'male' => 'Male',
-                        'female' => 'Female',
-                        'other' => 'Other',
+                Forms\Components\Section::make('Personal Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Name')
+                            ->required(),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required(),
+                        Forms\Components\TextInput::make('phone'),
+                        Forms\Components\DatePicker::make('dob')
+                            ->label('Date of Birth'),
+                        Forms\Components\Select::make('gender')
+                            ->options([
+                                'male' => 'Male',
+                                'female' => 'Female',
+                                'other' => 'Other',
+                            ]),
                     ]),
-                Forms\Components\TextInput::make('weight')
-                    ->numeric(),
-                Forms\Components\TextInput::make('height')
-                    ->numeric(),
-                Forms\Components\TextInput::make('aceds_no')
-                    ->label('ACEDS Number'),
-                Forms\Components\Select::make('goal_id')
-                    ->relationship('goal', 'name')
-                    ->required(),
+
+                Forms\Components\Section::make('Physical Information')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('weight')
+                                    ->numeric()
+                                    ->suffix('kg'),
+                                Forms\Components\TextInput::make('height')
+                                    ->numeric()
+                                    ->suffix('m'),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make('Academic Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('student_number')
+                            ->label('Student Number'),
+                        Forms\Components\TextInput::make('aceds_no')
+                            ->label('ACEDS Number'),
+                        Forms\Components\Select::make('goal_id')
+                            ->relationship('goal', 'name')
+                            ->label('Primary Goal'),
+                    ]),
+
+                Forms\Components\Section::make('Onboarding Status')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Toggle::make('email_verified_at')
+                                    ->label('Email Verified')
+                                    ->disabled()
+                                    ->formatStateUsing(fn($state) => !is_null($state)),
+                                Forms\Components\Toggle::make('password_changed_from_default')
+                                    ->label('Password Changed')
+                                    ->disabled(),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Toggle::make('terms_accepted')
+                                    ->label('Terms Accepted')
+                                    ->disabled(),
+                                Forms\Components\Toggle::make('onboarding_completed')
+                                    ->label('Onboarding Completed')
+                                    ->disabled(),
+                            ]),
+                    ]),
+
+                Forms\Components\Section::make('Profile Picture')
+                    ->schema([
+                        Forms\Components\FileUpload::make('profile_picture')
+                            ->disk('public')
+                            ->directory('profiles')
+                            ->image()
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeTargetWidth('300')
+                            ->imageResizeTargetHeight('300')
+                            ->maxSize(5120)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            ->removeUploadedFileButtonPosition('right')
+                            ->uploadButtonPosition('left')
+                            ->previewable(false),
+                    ]),
             ]);
     }
 
     public static function table(Tables\Table $table): Tables\Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['goal', 'courseProgress']))
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Tables\Columns\TextColumn::make('student_number')
                     ->label('Student #')
@@ -62,6 +120,11 @@ class ParticipantResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('semibold'),
+                Tables\Columns\IconColumn::make('onboarding_completed')
+                    ->label('Onboarded')
+                    ->boolean()
+                    ->toggleable()
+                    ->tooltip('Onboarding completed'),
                 Tables\Columns\TextColumn::make('program_description')
                     ->label('Program')
                     ->searchable()
@@ -71,11 +134,12 @@ class ParticipantResource extends Resource
                         if (strlen($state) <= 30) {
                             return null;
                         }
+
                         return $state;
                     }),
                 Tables\Columns\TextColumn::make('courseProgress.progress_percentage')
                     ->label('Progress')
-                    ->formatStateUsing(fn ($state) => $state ? $state . '%' : 'No data')
+                    ->formatStateUsing(fn ($state) => $state ? $state.'%' : 'No data')
                     ->badge()
                     ->color(fn ($state) => match (true) {
                         $state >= 90 => 'success',
@@ -87,8 +151,11 @@ class ParticipantResource extends Resource
                     ->label('Exams Taken')
                     ->formatStateUsing(function ($record) {
                         $progress = $record->courseProgress()->orderBy('enrollment_date', 'desc')->first();
-                        if (!$progress) return 'No data';
-                        return $progress->exams_taken . '/' . $progress->total_exams;
+                        if (! $progress) {
+                            return 'No data';
+                        }
+
+                        return $progress->exams_taken.'/'.$progress->total_exams;
                     })
                     ->badge()
                     ->color('primary'),

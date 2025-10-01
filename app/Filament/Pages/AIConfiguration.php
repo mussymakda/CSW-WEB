@@ -2,18 +2,15 @@
 
 namespace App\Filament\Pages;
 
-use App\Services\OllamaService;
 use App\Services\AINotificationService;
+use App\Services\OllamaService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Support\Exceptions\Halt;
 use Illuminate\Contracts\Support\Htmlable;
 
 class AIConfiguration extends Page
@@ -30,72 +27,73 @@ class AIConfiguration extends Page
 
     public ?array $data = [];
 
-    protected ?OllamaService $ollamaService = null;
-    protected ?AINotificationService $aiNotificationService = null;
-
     public function mount(): void
     {
-        $this->ollamaService = app(OllamaService::class);
-        $this->aiNotificationService = app(AINotificationService::class);
-        
         $this->form->fill([
-            'ollama_enabled' => config('ollama.enabled'),
-            'ollama_host' => config('ollama.host'),
-            'ollama_model' => config('ollama.model'),
-            'notifications_enabled' => config('ollama.notifications.enabled'),
-            'notification_interval' => config('ollama.notifications.interval'),
-            'batch_size' => config('ollama.notifications.batch_size'),
+            'notification_lookahead' => config('ollama.notifications.lookahead_hours', 24),
+            'batch_size' => config('ollama.notifications.batch_size', 10),
         ]);
+    }
+
+    protected function getOllamaService(): OllamaService
+    {
+        return app(OllamaService::class);
+    }
+
+    protected function getAINotificationService(): AINotificationService
+    {
+        return app(AINotificationService::class);
+    }
+
+    protected function getServiceStatus(): string
+    {
+        try {
+            $ollamaService = $this->getOllamaService();
+            $isAvailable = $ollamaService->isAvailable();
+
+            return $isAvailable ? '🟢 Online' : '🔴 Offline';
+        } catch (\Exception $e) {
+            return '🟡 Unknown - '.$e->getMessage();
+        }
     }
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Ollama Configuration')
-                    ->description('Configure the Ollama LLM service for AI-powered features')
+                Section::make('AI Service Status')
+                    ->description('Monitor and control the AI notification system')
                     ->schema([
-                        Grid::make(2)->schema([
-                            Toggle::make('ollama_enabled')
-                                ->label('Enable Ollama')
-                                ->helperText('Turn on/off Ollama integration'),
-                            
-                            TextInput::make('ollama_host')
-                                ->label('Ollama Host')
-                                ->placeholder('http://localhost:11434')
-                                ->helperText('URL where Ollama is running'),
-                        ]),
-                        
-                        Grid::make(2)->schema([
-                            Select::make('ollama_model')
-                                ->label('Model')
-                                ->options($this->getAvailableModels())
-                                ->helperText('Select the AI model to use'),
-                            
+                        Grid::make(3)->schema([
+                            TextInput::make('service_status')
+                                ->label('Service Status')
+                                ->default($this->getServiceStatus())
+                                ->disabled()
+                                ->suffixIcon('heroicon-o-signal'),
+
+                            TextInput::make('current_model')
+                                ->label('Current Model')
+                                ->default('llama3.2:3b (Optimized)')
+                                ->disabled()
+                                ->suffixIcon('heroicon-o-cpu-chip'),
+
                             TextInput::make('batch_size')
                                 ->label('Batch Size')
                                 ->numeric()
                                 ->default(10)
-                                ->helperText('Number of notifications to generate per batch'),
+                                ->helperText('Number of notifications per batch'),
                         ]),
                     ]),
 
                 Section::make('AI Notifications')
-                    ->description('Configure automatic AI-generated notifications')
+                    ->description('AI notifications automatically generate based on participant schedules')
                     ->schema([
                         Grid::make(2)->schema([
-                            Toggle::make('notifications_enabled')
-                                ->label('Enable AI Notifications')
-                                ->helperText('Automatically generate personalized notifications'),
-                            
-                            Select::make('notification_interval')
-                                ->label('Generation Interval')
-                                ->options([
-                                    'hourly' => 'Every Hour',
-                                    'daily' => 'Daily',
-                                    'weekly' => 'Weekly',
-                                ])
-                                ->helperText('How often to generate new notifications'),
+                            TextInput::make('notification_lookahead')
+                                ->label('Notification Lookahead (hours)')
+                                ->numeric()
+                                ->default(24)
+                                ->helperText('Generate notifications for tasks within this many hours'),
                         ]),
                     ]),
             ])
@@ -110,13 +108,19 @@ class AIConfiguration extends Page
                 ->icon('heroicon-o-wifi')
                 ->color('info')
                 ->action('testConnection'),
-                
-            Action::make('generate_test')
-                ->label('Generate Test Notification')
+
+            Action::make('reconnect_ollama')
+                ->label('Reconnect Ollama')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->action('reconnectOllama'),
+
+            Action::make('generate_batch')
+                ->label('Generate Notifications Now')
                 ->icon('heroicon-o-sparkles')
                 ->color('success')
-                ->action('generateTestNotification'),
-                
+                ->action('generateNotificationBatch'),
+
             Action::make('view_stats')
                 ->label('View Statistics')
                 ->icon('heroicon-o-chart-bar')
@@ -128,14 +132,14 @@ class AIConfiguration extends Page
     public function testConnection(): void
     {
         try {
-            $ollamaService = $this->ollamaService ?? app(OllamaService::class);
-            
+            $ollamaService = $this->getOllamaService();
+
             $results = $ollamaService->test();
-            
+
             if ($results['connection'] && $results['model_available'] && $results['test_generation']) {
                 Notification::make()
                     ->title('Connection Successful!')
-                    ->body('Ollama is working correctly with model: ' . config('ollama.model'))
+                    ->body('Ollama is working correctly with model: '.config('ollama.model'))
                     ->success()
                     ->send();
             } else {
@@ -149,47 +153,67 @@ class AIConfiguration extends Page
         } catch (\Exception $e) {
             Notification::make()
                 ->title('Test Failed')
-                ->body('Error: ' . $e->getMessage())
+                ->body('Error: '.$e->getMessage())
                 ->danger()
                 ->send();
         }
     }
 
-    public function generateTestNotification(): void
+    public function reconnectOllama(): void
     {
         try {
-            $participant = \App\Models\Participant::with('goal')->first();
-            
-            if (!$participant) {
-                Notification::make()
-                    ->title('No Participants Found')
-                    ->body('Please create a participant first to test notifications')
-                    ->warning()
-                    ->send();
-                return;
-            }
+            // Reset the Ollama service connection
+            $ollamaService = $this->getOllamaService();
+            $ollamaService->reconnect();
 
-            $aiNotificationService = $this->aiNotificationService ?? app(AINotificationService::class);
+            // Test the connection
+            $results = $ollamaService->test();
 
-            $notification = $aiNotificationService->generateParticipantNotification($participant);
-            
-            if ($notification) {
+            if ($results['connection'] && $results['model_available']) {
                 Notification::make()
-                    ->title('Test Notification Generated!')
-                    ->body("Generated for {$participant->name}: {$notification->notification_text}")
+                    ->title('Reconnection Successful!')
+                    ->body('Ollama has been reconnected and is working properly')
                     ->success()
                     ->send();
             } else {
+                $error = $results['error'] ?? 'Reconnection failed';
                 Notification::make()
-                    ->title('Generation Failed')
-                    ->body('Could not generate test notification')
-                    ->danger()
+                    ->title('Reconnection Failed')
+                    ->body($error)
+                    ->warning()
                     ->send();
             }
         } catch (\Exception $e) {
             Notification::make()
-                ->title('Test Failed')
-                ->body('Error: ' . $e->getMessage())
+                ->title('Reconnection Error')
+                ->body('Error: '.$e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function generateNotificationBatch(): void
+    {
+        try {
+            $aiNotificationService = $this->getAINotificationService();
+
+            $results = $aiNotificationService->generateScheduledNotifications();
+
+            $message = "Generated: {$results['generated']} notifications";
+            if (! empty($results['errors'])) {
+                $message .= "\nErrors: ".count($results['errors']);
+            }
+
+            Notification::make()
+                ->title('Batch Generation Complete')
+                ->body($message)
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Batch Generation Failed')
+                ->body('Error: '.$e->getMessage())
                 ->danger()
                 ->send();
         }
@@ -198,14 +222,14 @@ class AIConfiguration extends Page
     public function viewStatistics(): void
     {
         try {
-            $aiNotificationService = $this->aiNotificationService ?? app(AINotificationService::class);
-            
+            $aiNotificationService = $this->getAINotificationService();
+
             $stats = $aiNotificationService->getStatistics();
-            
+
             $message = "Today's AI Notifications: {$stats['total_ai_notifications']}\n";
             $message .= "Participants Notified: {$stats['participants_notified_today']}\n";
-            $message .= "Ollama Status: " . ($stats['ollama_status']['available'] ? 'Available' : 'Unavailable');
-            
+            $message .= 'Ollama Status: '.($stats['ollama_status']['available'] ? 'Available' : 'Unavailable');
+
             Notification::make()
                 ->title('AI Notification Statistics')
                 ->body($message)
@@ -214,26 +238,9 @@ class AIConfiguration extends Page
         } catch (\Exception $e) {
             Notification::make()
                 ->title('Statistics Error')
-                ->body('Error: ' . $e->getMessage())
+                ->body('Error: '.$e->getMessage())
                 ->danger()
                 ->send();
-        }
-    }
-
-    protected function getAvailableModels(): array
-    {
-        try {
-            $ollamaService = $this->ollamaService ?? app(OllamaService::class);
-            
-            $models = $ollamaService->getAvailableModels();
-            
-            if (empty($models)) {
-                return [config('ollama.model') => config('ollama.model') . ' (default)'];
-            }
-            
-            return array_combine($models, $models);
-        } catch (\Exception $e) {
-            return [config('ollama.model') => config('ollama.model') . ' (default)'];
         }
     }
 

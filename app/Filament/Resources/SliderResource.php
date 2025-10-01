@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SliderResource\Pages;
-use App\Filament\Resources\SliderResource\RelationManagers;
 use App\Models\Slider;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,20 +10,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SliderResource extends Resource
 {
     protected static ?string $model = Slider::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
-    
+
     protected static ?string $navigationLabel = 'Mobile Sliders';
-    
+
     protected static ?string $modelLabel = 'Mobile Slider';
-    
+
     protected static ?string $pluralModelLabel = 'Mobile Sliders';
-    
+
     protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
@@ -49,24 +47,33 @@ class SliderResource extends Resource
                                 '3:2',
                                 '4:3',
                             ])
+                            ->imageResizeMode('cover')
+                            ->imageResizeTargetWidth('800')
+                            ->imageResizeTargetHeight('450')
+                            ->disk('public')
                             ->directory('slider-images')
                             ->visibility('public')
+                            ->maxSize(10240)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            ->removeUploadedFileButtonPosition('right')
+                            ->uploadButtonPosition('left')
+                            ->previewable(false)
                             ->columnSpan(2),
                     ])->columns(2),
-                    
+
                 Forms\Components\Section::make('Link Settings')
                     ->schema([
                         Forms\Components\TextInput::make('link_url')
                             ->label('Link URL')
                             ->url()
                             ->maxLength(255)
-                            ->placeholder('https://example.com'),
+                            ->placeholder('https://www.yoursite.com'),
                         Forms\Components\TextInput::make('link_text')
                             ->label('Link Button Text')
                             ->maxLength(255)
                             ->placeholder('Learn More'),
                     ])->columns(2),
-                    
+
                 Forms\Components\Section::make('Schedule & Settings')
                     ->schema([
                         Forms\Components\DatePicker::make('start_date')
@@ -94,6 +101,7 @@ class SliderResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Image')
+                    ->disk('public')
                     ->circular()
                     ->size(60),
                 Tables\Columns\TextColumn::make('title')
@@ -107,6 +115,7 @@ class SliderResource extends Resource
                         if (strlen($state) <= 50) {
                             return null;
                         }
+
                         return $state;
                     }),
                 Tables\Columns\TextColumn::make('link_text')
@@ -157,7 +166,7 @@ class SliderResource extends Resource
                     ->color('info')
                     ->url(fn (Slider $record): string => $record->link_url ?: '#')
                     ->openUrlInNewTab()
-                    ->visible(fn (Slider $record): bool => !empty($record->link_url)),
+                    ->visible(fn (Slider $record): bool => ! empty($record->link_url)),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

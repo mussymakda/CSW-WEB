@@ -42,11 +42,7 @@
                                     AI Notifications
                                 </dt>
                                 <dd class="text-lg font-medium text-gray-900 dark:text-white">
-                                    @if(config('ollama.notifications.enabled'))
-                                        <span class="text-green-600">✅ Enabled</span>
-                                    @else
-                                        <span class="text-gray-600">❌ Disabled</span>
-                                    @endif
+                                    <span class="text-green-600">✅ Always Enabled</span>
                                 </dd>
                             </dl>
                         </div>
@@ -92,10 +88,11 @@
                     </h3>
                     <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
                         <ul class="list-disc list-inside space-y-1">
-                            <li>AI notifications are generated using Ollama with the configured model</li>
-                            <li>Notifications are personalized based on participant goals and progress</li>
-                            <li>The system automatically prevents duplicate notifications within an hour</li>
-                            <li>You can test the connection and generate sample notifications using the buttons above</li>
+                            <li>AI notifications are always enabled and generated based on participant schedules</li>
+                            <li>Notifications are generated in batches with local delivery timing</li>
+                            <li>System includes failsafe reconnection logic for reliability</li>
+                            <li>Notifications are personalized based on goals, progress, and upcoming tasks</li>
+                            <li>Use "Reconnect Ollama" if the service becomes unresponsive</li>
                         </ul>
                     </div>
                 </div>

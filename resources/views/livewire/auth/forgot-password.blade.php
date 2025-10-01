@@ -36,7 +36,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
             type="email"
             required
             autofocus
-            placeholder="email@example.com"
+            placeholder="your@email.com"
             viewable
         />
 

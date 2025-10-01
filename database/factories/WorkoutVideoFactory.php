@@ -18,7 +18,7 @@ class WorkoutVideoFactory extends Factory
     {
         $videoTitles = [
             'Beginner Push-ups Tutorial',
-            'Advanced Squats Technique', 
+            'Advanced Squats Technique',
             'Core Blaster 10-Min Routine',
             'HIIT Cardio Workout',
             'Full Body Stretch Session',
@@ -26,14 +26,14 @@ class WorkoutVideoFactory extends Factory
             'Fat Burning Cardio',
             'Power Training Circuit',
             'Flexibility Flow Yoga',
-            'Muscle Building Routine'
+            'Muscle Building Routine',
         ];
 
         return [
-            'title' => $this->faker->randomElement($videoTitles) . ' - Day ' . $this->faker->numberBetween(1, 30),
-            'image' => 'https://picsum.photos/640/360?random=' . $this->faker->numberBetween(1, 1000),
+            'title' => $this->faker->randomElement($videoTitles).' - Day '.$this->faker->numberBetween(1, 30),
+            'image' => null,
             'duration_minutes' => $this->faker->numberBetween(5, 60),
-            'video_url' => 'https://www.youtube.com/watch?v=' . $this->faker->regexify('[A-Za-z0-9_-]{11}'),
+            'video_url' => null,
         ];
     }
 }

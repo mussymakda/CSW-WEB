@@ -7,8 +7,6 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WorkoutVideosRelationManager extends RelationManager
 {
@@ -24,7 +22,15 @@ class WorkoutVideosRelationManager extends RelationManager
                 Forms\Components\FileUpload::make('image')
                     ->image()
                     ->disk('public')
-                    ->directory('workout-videos'),
+                    ->directory('workout-videos')
+                    ->imageResizeMode('cover')
+                    ->imageResizeTargetWidth('400')
+                    ->imageResizeTargetHeight('300')
+                    ->maxSize(5120)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->removeUploadedFileButtonPosition('right')
+                    ->uploadButtonPosition('left')
+                    ->previewable(false),
                 Forms\Components\TextInput::make('duration_minutes')
                     ->label('Duration (minutes)')
                     ->numeric()
@@ -50,7 +56,7 @@ class WorkoutVideosRelationManager extends RelationManager
                     ->size(40),
                 Tables\Columns\TextColumn::make('duration_minutes')
                     ->label('Duration')
-                    ->formatStateUsing(fn (string $state): string => $state . ' min')
+                    ->formatStateUsing(fn (string $state): string => $state.' min')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('Video URL')

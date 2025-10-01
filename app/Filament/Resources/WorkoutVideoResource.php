@@ -3,15 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WorkoutVideoResource\Pages;
-use App\Filament\Resources\WorkoutVideoResource\RelationManagers;
 use App\Models\WorkoutVideo;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WorkoutVideoResource extends Resource
 {
@@ -31,7 +28,15 @@ class WorkoutVideoResource extends Resource
                 Forms\Components\FileUpload::make('image')
                     ->image()
                     ->disk('public')
-                    ->directory('workout-videos'),
+                    ->directory('workout-videos')
+                    ->imageResizeMode('cover')
+                    ->imageResizeTargetWidth('400')
+                    ->imageResizeTargetHeight('300')
+                    ->maxSize(5120)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->removeUploadedFileButtonPosition('right')
+                    ->uploadButtonPosition('left')
+                    ->previewable(false),
                 Forms\Components\TextInput::make('duration_minutes')
                     ->label('Duration (minutes)')
                     ->numeric()
@@ -53,15 +58,17 @@ class WorkoutVideoResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('workoutSubcategory'))
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('image')
                     ->disk('public')
+                    ->disk('public')
                     ->size(50),
                 Tables\Columns\TextColumn::make('duration_minutes')
                     ->label('Duration')
-                    ->formatStateUsing(fn (string $state): string => $state . ' min')
+                    ->formatStateUsing(fn (string $state): string => $state.' min')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('video_url')
                     ->label('Video URL')

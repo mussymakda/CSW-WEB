@@ -1,5 +1,0 @@
-Student Number,Student Name,Student Personal Email,Student Phone Number,Student Location,Student Gender,Student Date of Birth,Student Weight,Student Height,ACEDS Number,Client Name,Enrollment Date,Graduation Date,Program Description,Student Status,Exams Completed %,Total Exams,Exams Taken,Exams Needed,Last Exam Date,Location Name
-STU001,John Smith,john.smith@email.com,555-0101,New York,Male,1995-03-15,180,5.9,ACEDS001,TechCorp,2024-01-15,2024-12-15,Web Development Bootcamp,Active,75%,10,7,3,2024-06-15,NYC Campus
-STU002,Jane Doe,jane.doe@email.com,555-0102,Los Angeles,Female,1992-07-22,135,5.4,ACEDS002,HealthPlus,2024-02-01,2025-01-01,Data Science Program,Active,60%,12,7,5,2024-06-10,LA Campus  
-STU003,Mike Johnson,mike.j@email.com,555-0103,Chicago,Male,1988-11-30,200,6.1,ACEDS003,FinanceOne,2024-01-10,2024-11-10,Cybersecurity Course,Completed,100%,8,8,0,2024-05-20,Chicago Center
-STU004,Sarah Wilson,sarah.w@email.com,555-0104,Houston,Female,1996-09-05,125,5.2,ACEDS004,RetailMax,2024-03-01,,Mobile App Development,Paused,25%,15,4,11,2024-05-01,Houston Hub

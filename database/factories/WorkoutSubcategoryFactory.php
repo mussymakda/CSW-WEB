@@ -19,7 +19,7 @@ class WorkoutSubcategoryFactory extends Factory
         return [
             'title' => $this->faker->randomElement([
                 'Upper Body Strength',
-                'Lower Body Power', 
+                'Lower Body Power',
                 'Core Conditioning',
                 'Cardio Blast',
                 'Flexibility & Mobility',
@@ -27,10 +27,10 @@ class WorkoutSubcategoryFactory extends Factory
                 'Functional Fitness',
                 'Endurance Building',
                 'Weight Loss Focus',
-                'Muscle Building'
+                'Muscle Building',
             ]),
             'info' => $this->faker->paragraphs(2, true),
-            'image' => 'https://picsum.photos/400/300?random=' . $this->faker->numberBetween(1, 1000),
+            'image' => null,
         ];
     }
 }

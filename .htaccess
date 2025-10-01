@@ -1,0 +1,116 @@
+# CSW Laravel Application - Public HTML Configuration
+# This .htaccess file should be placed in your public_html root directory
+# It redirects requests to the Laravel application while maintaining security
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect HTTP to HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Handle API routes - direct to Laravel
+    RewriteRule ^api/(.*)$ index.php [QSA,L]
+    
+    # Handle storage routes - direct to storage symlink
+    RewriteRule ^storage/(.*)$ storage/$1 [L]
+    
+    # Handle asset routes (CSS, JS, images, etc.)
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^(css|js|images|fonts|assets)/(.*)$ $1/$2 [L]
+    
+    # Handle all other routes through Laravel
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Deny access to sensitive files and directories
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<DirectoryMatch "^.*/laravel/(app|bootstrap|config|database|resources|routes|storage|tests|vendor)/">
+    Require all denied
+</DirectoryMatch>
+
+<Files "composer.json">
+    Require all denied
+</Files>
+
+<Files "composer.lock">
+    Require all denied
+</Files>
+
+<Files "package.json">
+    Require all denied
+</Files>
+
+<Files ".env">
+    Require all denied
+</Files>
+
+<Files "artisan">
+    Require all denied
+</Files>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive on
+    
+    # Images
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    
+    # CSS and JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    
+    # Default cache for other files
+    ExpiresDefault "access plus 1 week"
+</IfModule>
+
+# Gzip Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# File Upload Limits (adjust as needed)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
