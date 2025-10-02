@@ -8,29 +8,26 @@ This guide helps you deploy your CSW Laravel app by running commands directly on
 
 First, upload your project files to the server using your preferred method (FTP, cPanel File Manager, etc.):
 
-#### Upload Structure:
+#### Upload Structure (All files in public_html root):
 ```
 /home/your-username/public_html/
-├── Upload Laravel app files to: laravel/
-│   ├── app/
-│   ├── bootstrap/
-│   ├── config/
-│   ├── database/
-│   ├── resources/
-│   ├── routes/
-│   ├── storage/
-│   ├── vendor/           # Include this if composer not available
-│   ├── .env              # Copy from .env.production
-│   ├── artisan
-│   └── composer.json
-│
-├── Upload public files to root:
-│   ├── .htaccess         # Root .htaccess file
-│   ├── index.php         # From public/ directory
-│   ├── favicon.ico
-│   ├── css/
-│   ├── js/
-│   └── images/
+├── app/                  # Laravel application files
+├── bootstrap/
+├── config/
+├── database/
+├── resources/
+├── routes/
+├── storage/
+├── vendor/               # Include if composer not available
+├── .env                  # Copy from .env.production
+├── .htaccess            # Use public/.htaccess from Laravel
+├── artisan
+├── composer.json
+├── index.php            # From Laravel public/ directory
+├── favicon.ico
+├── css/                 # Public assets
+├── js/
+└── images/
 ```
 
 ### 📋 Step 2: Connect to Server Terminal

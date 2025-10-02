@@ -5,18 +5,25 @@
 ### 1. Upload Files
 Upload your project to server using FTP/cPanel File Manager:
 
-**Upload Structure:**
+**Upload Structure (All files in public_html root):**
 ```
 public_html/
-├── laravel/          ← Upload entire Laravel project here
-│   ├── app/
-│   ├── config/
-│   ├── .env
-│   └── artisan
-├── .htaccess         ← Root htaccess file
-├── index.php         ← From public/ folder
-├── css/
-└── js/
+├── app/              ← Laravel application files
+├── bootstrap/
+├── config/
+├── database/
+├── resources/
+├── routes/
+├── storage/
+├── vendor/
+├── .env              ← Environment configuration
+├── .htaccess         ← Laravel's public/.htaccess
+├── artisan           ← Laravel CLI
+├── composer.json
+├── index.php         ← Laravel's public/index.php (no changes needed)
+├── css/              ← Public assets
+├── js/
+└── images/
 ```
 
 ### 2. Run These Commands in Server Terminal
@@ -25,35 +32,33 @@ public_html/
 # Navigate to your directory
 cd ~/public_html
 
-# Fix index.php paths
-sed -i 's|__DIR__.'"'"'/../vendor/autoload.php|__DIR__."/laravel/vendor/autoload.php|g' index.php
-sed -i 's|__DIR__.'"'"'/../bootstrap/app.php|__DIR__."/laravel/bootstrap/app.php|g' index.php
-
 # Set permissions
-chmod -R 755 laravel/
-chmod -R 775 laravel/storage/
-chmod -R 775 laravel/bootstrap/cache/
+chmod -R 755 .
+chmod -R 775 storage/
+chmod -R 775 bootstrap/cache/
 
-# Configure Laravel
-cd laravel
+# Configure Laravel (if .env doesn't exist)
 cp .env.production .env  # If needed
 php artisan key:generate --force
+
+# Run database migrations
 php artisan migrate --force
+
+# Create storage symlink (for file uploads)
 php artisan storage:link
+
+# Cache for production
 php artisan config:cache
 php artisan route:cache
+php artisan view:cache
 
-# Create storage symlink
-cd ..
-ln -sfn laravel/storage/app/public storage
-
-# Test
-php laravel/artisan --version
+# Test Laravel installation
+php artisan --version
 ```
 
 ### 3. Update Database in .env
 ```bash
-cd ~/public_html/laravel
+cd ~/public_html
 nano .env
 
 # Update:
@@ -68,4 +73,4 @@ Your API at: `https://your-domain.com/api`
 
 ---
 
-**Need help?** Check logs: `tail ~/public_html/laravel/storage/logs/laravel.log`
+**Need help?** Check logs: `tail ~/public_html/storage/logs/laravel.log`
