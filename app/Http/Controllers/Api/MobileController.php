@@ -509,19 +509,18 @@ class MobileController extends Controller
         try {
             $participant = $request->user();
             
-            $notifications = UserNotification::where('user_id', $participant->id)
-                ->where('scheduled_for', '<=', now())
-                ->orderBy('scheduled_for', 'desc')
+            $notifications = UserNotification::where('participant_id', $participant->id)
+                ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($notification) {
                     return [
                         'id' => $notification->id,
-                        'title' => $notification->title,
-                        'message' => $notification->message,
-                        'type' => $notification->type,
-                        'scheduled_for' => $notification->scheduled_for->format('Y-m-d H:i:s'),
+                        'icon' => $notification->icon,
+                        'notification_text' => $notification->notification_text,
+                        'notification_type' => $notification->notification_type,
+                        'delivery_time' => $notification->delivery_time?->format('Y-m-d H:i:s'),
                         'is_read' => $notification->is_read,
-                        'read_at' => $notification->read_at?->format('Y-m-d H:i:s'),
+                        'created_at' => $notification->created_at->format('Y-m-d H:i:s'),
                     ];
                 });
 
