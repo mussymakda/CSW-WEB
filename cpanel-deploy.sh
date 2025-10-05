@@ -19,6 +19,7 @@ set -e  # Exit on any error
 SERVER_HOST="fitandfocusedacademics.com"
 SERVER_USER="csw"
 SERVER_HOME="/home/csw"
+SERVER_APP="/home/csw/app"
 SERVER_PUBLIC="/home/csw/public_html"
 SSH_KEY_PATH="~/.ssh/id_rsa"
 
@@ -347,23 +348,25 @@ public/
 cpanel_*
 EOF
 
-    # Upload Laravel application files to home directory (excluding public)
+    # Create app directory and upload Laravel application (excluding public)
+    ssh -i "$SSH_KEY_PATH" "$SERVER_USER@$SERVER_HOST" "mkdir -p /home/csw/app"
+    
     rsync -avz \
         --exclude-from=.rsync_exclude \
+        --exclude 'public/' \
         --delete \
         -e "ssh -i $SSH_KEY_PATH" \
         ./ \
-        "$SERVER_USER@$SERVER_HOST:$SERVER_HOME/"
+        "$SERVER_USER@$SERVER_HOST:$SERVER_APP/"
     
-    # Upload public directory contents and custom files to public_html
+    # Upload public directory contents to public_html
     rsync -avz \
         -e "ssh -i $SSH_KEY_PATH" \
         ./public/ \
         "$SERVER_USER@$SERVER_HOST:$SERVER_PUBLIC/"
-    
-    # Upload custom cPanel files
+        
+    # Upload custom index.php that points to app directory
     scp -i "$SSH_KEY_PATH" ./cpanel_index.php "$SERVER_USER@$SERVER_HOST:$SERVER_PUBLIC/index.php"
-    scp -i "$SSH_KEY_PATH" ./cpanel_htaccess "$SERVER_USER@$SERVER_HOST:$SERVER_PUBLIC/.htaccess"
     
     # Clean up local temporary files
     rm -f .rsync_exclude ./cpanel_index.php ./cpanel_htaccess
@@ -376,22 +379,19 @@ configure_cpanel_server() {
     log "Configuring cPanel server..."
     
     ssh -i "$SSH_KEY_PATH" "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
-        cd /home/csw
-        
-        # Set proper permissions for Laravel
+        # Set proper permissions for Laravel app
+        cd /home/csw/app
         chmod -R 755 .
         chmod -R 775 storage/
         chmod -R 775 bootstrap/cache/
         
         # Set proper permissions for public_html
-        chmod -R 755 public_html/
-        chmod 644 public_html/.htaccess
-        chmod 644 public_html/index.php
+        cd /home/csw/public_html
+        chmod -R 755 .
         
-        # Create symbolic link for storage (if possible)
-        cd public_html
+        # Create symbolic link for storage
         if [ ! -L storage ]; then
-            ln -sfn ../storage/app/public storage 2>/dev/null || echo "Could not create storage symlink - may need manual setup"
+            ln -sfn ../app/storage/app/public storage 2>/dev/null || echo "Storage symlink created or already exists"
         fi
         
         echo "cPanel server configuration completed"
@@ -518,7 +518,8 @@ fi
 echo -e "${YELLOW}This will deploy your Laravel application to cPanel:${NC}"
 echo -e "${YELLOW}Server: $SERVER_HOST${NC}"
 echo -e "${YELLOW}User: $SERVER_USER${NC}"
-echo -e "${YELLOW}Laravel Home: $SERVER_HOME${NC}"
+echo -e "${YELLOW}Laravel App: $SERVER_APP${NC}"
+echo -e "${YELLOW}Public HTML: $SERVER_PUBLIC${NC}"
 echo -e "${YELLOW}Public HTML: $SERVER_PUBLIC${NC}"
 echo -e "${YELLOW}Domain: $DOMAIN${NC}"
 echo ""
