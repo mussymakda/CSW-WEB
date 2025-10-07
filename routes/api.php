@@ -2,8 +2,9 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ParticipantController;
-use App\Services\OllamaService;
+
 use App\Services\AINotificationService;
+use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Slider;
