@@ -1,0 +1,62 @@
+# Laravel Application - Clean .htaccess for shared hosting
+# No DirectoryMatch directives - uses only RewriteRule for compatibility
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Main Rewrite Rules
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Block access to Laravel directories using RewriteRule only
+    RewriteRule ^app(/.*)?$ - [F,L]
+    RewriteRule ^bootstrap(/.*)?$ - [F,L]
+    RewriteRule ^config(/.*)?$ - [F,L]
+    RewriteRule ^database(/.*)?$ - [F,L]
+    RewriteRule ^resources(/.*)?$ - [F,L]
+    RewriteRule ^routes(/.*)?$ - [F,L]
+    RewriteRule ^tests(/.*)?$ - [F,L]
+    RewriteRule ^vendor(/.*)?$ - [F,L]
+    
+    # Block sensitive files
+    RewriteRule ^\.env$ - [F,L]
+    RewriteRule ^composer\.(json|lock)$ - [F,L]
+    RewriteRule ^artisan$ - [F,L]
+    
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
+    # Redirect Trailing Slashes
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+    
+    # Send Requests To Laravel Front Controller
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Block dot files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive on
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresDefault "access plus 1 week"
+</IfModule>
