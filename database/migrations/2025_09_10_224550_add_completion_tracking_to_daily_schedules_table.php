@@ -29,11 +29,11 @@ return new class extends Migration
         Schema::table('daily_schedules', function (Blueprint $table) {
             $table->dropColumn([
                 'is_completed',
-                'completed_at', 
+                'completed_at',
                 'completion_notes',
                 'priority',
                 'category',
-                'location'
+                'location',
             ]);
         });
     }

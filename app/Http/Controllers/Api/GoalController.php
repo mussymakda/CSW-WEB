@@ -18,7 +18,7 @@ class GoalController extends Controller
             $goals = Goal::with([
                 'workoutSubcategories' => function ($query) {
                     $query->with(['workoutVideos']);
-                }
+                },
             ])->get();
 
             return response()->json([
@@ -44,7 +44,7 @@ class GoalController extends Controller
             $goal = Goal::with([
                 'workoutSubcategories' => function ($query) {
                     $query->with(['workoutVideos']);
-                }
+                },
             ])->findOrFail($goalId);
 
             return response()->json([

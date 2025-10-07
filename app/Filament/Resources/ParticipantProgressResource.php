@@ -5,25 +5,22 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ParticipantProgressResource\Pages;
 use App\Filament\Resources\ParticipantProgressResource\Pages\ImportParticipantProgress;
 use App\Models\ParticipantCourseProgress;
-use App\Models\Participant;
-use App\Models\CourseBatch;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class ParticipantProgressResource extends Resource
 {
     protected static ?string $model = ParticipantCourseProgress::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar-square';
-    
+
     protected static ?string $navigationGroup = 'Course Management';
-    
+
     protected static ?int $navigationSort = 3;
-    
+
     protected static ?string $navigationLabel = 'Progress Tracking';
 
     public static function form(Form $form): Form
@@ -85,7 +82,7 @@ class ParticipantProgressResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('progress_percentage')
                     ->label('Progress')
-                    ->formatStateUsing(fn ($state) => $state . '%')
+                    ->formatStateUsing(fn ($state) => $state.'%')
                     ->badge()
                     ->color(fn ($state) => match (true) {
                         $state >= 80 => 'success',
@@ -111,11 +108,14 @@ class ParticipantProgressResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('exams_taken')
                     ->label('Exams')
-                    ->formatStateUsing(fn ($record) => $record->exams_taken . '/' . $record->total_exams)
+                    ->formatStateUsing(fn ($record) => $record->exams_taken.'/'.$record->total_exams)
                     ->badge()
                     ->color(function ($record) {
-                        if (!$record->total_exams) return 'gray';
+                        if (! $record->total_exams) {
+                            return 'gray';
+                        }
                         $ratio = $record->exams_taken / $record->total_exams;
+
                         return match (true) {
                             $ratio >= 0.8 => 'success',
                             $ratio >= 0.6 => 'warning',

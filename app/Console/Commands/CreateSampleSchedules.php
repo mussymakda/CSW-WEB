@@ -2,10 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Participant;
 use App\Models\DailySchedule;
+use App\Models\Participant;
 use Illuminate\Console\Command;
-use Carbon\Carbon;
 
 class CreateSampleSchedules extends Command
 {
@@ -29,17 +28,19 @@ class CreateSampleSchedules extends Command
     public function handle()
     {
         $participantId = $this->argument('participant');
-        
+
         if ($participantId) {
             $participant = Participant::find($participantId);
-            if (!$participant) {
+            if (! $participant) {
                 $this->error("Participant with ID {$participantId} not found.");
+
                 return 1;
             }
         } else {
             $participant = Participant::first();
-            if (!$participant) {
+            if (! $participant) {
                 $this->error('No participants found. Please create participants first.');
+
                 return 1;
             }
         }
@@ -100,23 +101,23 @@ class CreateSampleSchedules extends Command
                 'category' => $schedule['category'],
                 'location' => $schedule['location'],
                 'priority' => $schedule['priority'],
-                'is_completed' => false
+                'is_completed' => false,
             ]);
-            
+
             $this->line("✅ Created: {$schedule['task']} at {$schedule['time']}");
         }
 
         $this->info("\n🎉 Sample schedules created for {$participant->name}!");
-        $this->line("💡 Test AI notifications:");
+        $this->line('💡 Test AI notifications:');
         $this->line("  php artisan notifications:generate-ai --participant={$participant->id} --type=schedule_optimization");
         $this->line("  php artisan notifications:generate-ai --participant={$participant->id} --type=efficiency_suggestion");
-        
+
         // Mark one task as overdue for testing
         $overdueTask = DailySchedule::where('participant_id', $participant->id)
             ->where('day', $today)
             ->where('time', '<', now()->format('H:i'))
             ->first();
-            
+
         if ($overdueTask) {
             $this->line("  php artisan notifications:generate-ai --participant={$participant->id} --type=overdue_reminder");
         }

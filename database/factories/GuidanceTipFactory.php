@@ -18,7 +18,7 @@ class GuidanceTipFactory extends Factory
     {
         return [
             'name' => $this->faker->sentence(3),
-            'image' => 'guidance-tips/' . $this->faker->uuid() . '.jpg',
+            'image' => 'guidance-tips/'.$this->faker->uuid().'.jpg',
             'link' => $this->faker->url(),
             'is_active' => true,
             'sort_order' => $this->faker->numberBetween(1, 10),

@@ -4,9 +4,9 @@ namespace App\Filament\Resources\ParticipantResource\Pages;
 
 use App\Filament\Resources\ParticipantResource;
 use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewParticipant extends ViewRecord
 {
@@ -87,7 +87,7 @@ class ViewParticipant extends ViewRecord
                             ->color('warning'),
                         Infolists\Components\TextEntry::make('average_progress')
                             ->label('Average Progress')
-                            ->getStateUsing(fn ($record) => round($record->courseProgress()->avg('progress_percentage') ?? 0, 1) . '%')
+                            ->getStateUsing(fn ($record) => round($record->courseProgress()->avg('progress_percentage') ?? 0, 1).'%')
                             ->badge()
                             ->color('primary'),
                     ])
@@ -102,6 +102,7 @@ class ViewParticipant extends ViewRecord
                                     ->where('progress_percentage', '<', 100)
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
+
                                 return $current ? $record->program_description : 'No active course';
                             })
                             ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
@@ -117,6 +118,7 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
+
                                 return $current ? $current->enrollment_date->toDateString() : 'N/A';
                             })
                             ->icon('heroicon-m-calendar-days'),
@@ -126,6 +128,7 @@ class ViewParticipant extends ViewRecord
                             ->badge()
                             ->color(function ($record) {
                                 $status = $record->status ?? 'active';
+
                                 return match (strtolower($status)) {
                                     'completed', 'graduated' => 'success',
                                     'active', 'enrolled' => 'info',
@@ -146,7 +149,8 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                return $current ? $current->progress_percentage . '%' : 'No data';
+
+                                return $current ? $current->progress_percentage.'%' : 'No data';
                             })
                             ->icon('heroicon-m-chart-bar')
                             ->badge()
@@ -154,8 +158,11 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                if (!$current) return 'gray';
+                                if (! $current) {
+                                    return 'gray';
+                                }
                                 $progress = $current->progress_percentage;
+
                                 return match (true) {
                                     $progress >= 90 => 'success',
                                     $progress >= 70 => 'warning',
@@ -169,6 +176,7 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
+
                                 return $current ? $current->total_exams : 'No data';
                             })
                             ->icon('heroicon-m-document-text')
@@ -180,6 +188,7 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
+
                                 return $current ? $current->exams_taken : 'No data';
                             })
                             ->icon('heroicon-m-document-check')
@@ -191,6 +200,7 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
+
                                 return $current ? $current->exams_needed : 'No data';
                             })
                             ->icon('heroicon-m-clipboard-document-list')
@@ -199,7 +209,10 @@ class ViewParticipant extends ViewRecord
                                 $current = $record->courseProgress()
                                     ->orderBy('enrollment_date', 'desc')
                                     ->first();
-                                if (!$current || !$current->exams_needed) return 'success';
+                                if (! $current || ! $current->exams_needed) {
+                                    return 'success';
+                                }
+
                                 return $current->exams_needed <= 3 ? 'warning' : 'info';
                             }),
                     ])

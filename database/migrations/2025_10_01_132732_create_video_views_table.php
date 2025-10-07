@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('viewed_at');
             $table->integer('duration_watched_seconds')->default(0);
             $table->timestamps();
-            
+
             // Ensure one view record per participant per video per day
             $table->unique(['participant_id', 'workout_video_id', 'viewed_at']);
         });

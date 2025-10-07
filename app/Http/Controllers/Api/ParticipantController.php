@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Participant;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ParticipantController extends Controller
 {
@@ -15,6 +15,7 @@ class ParticipantController extends Controller
     public function index(): JsonResponse
     {
         $participants = Participant::with(['goal', 'dailySchedules'])->get();
+
         return response()->json($participants);
     }
 
@@ -37,6 +38,7 @@ class ParticipantController extends Controller
         ]);
 
         $participant = Participant::create($validated);
+
         return response()->json($participant->load(['goal', 'dailySchedules']), 201);
     }
 
@@ -46,6 +48,7 @@ class ParticipantController extends Controller
     public function show(string $id): JsonResponse
     {
         $participant = Participant::with(['goal', 'dailySchedules'])->findOrFail($id);
+
         return response()->json($participant);
     }
 
@@ -55,10 +58,10 @@ class ParticipantController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $participant = Participant::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:participants,email,' . $id,
+            'email' => 'sometimes|required|email|unique:participants,email,'.$id,
             'phone' => 'nullable|string|max:255',
             'dob' => 'nullable|date',
             'profile_picture' => 'nullable|image|max:2048',
@@ -70,6 +73,7 @@ class ParticipantController extends Controller
         ]);
 
         $participant->update($validated);
+
         return response()->json($participant->load(['goal', 'dailySchedules']));
     }
 
@@ -80,6 +84,7 @@ class ParticipantController extends Controller
     {
         $participant = Participant::findOrFail($id);
         $participant->delete();
+
         return response()->json(['message' => 'Participant deleted successfully']);
     }
 }

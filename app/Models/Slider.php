@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class Slider extends Model
 {
@@ -38,12 +37,13 @@ class Slider extends Model
     public function scopeCurrent($query)
     {
         $now = date('Y-m-d');
+
         return $query->where(function ($q) use ($now) {
             $q->whereNull('start_date')
-              ->orWhere('start_date', '<=', $now);
+                ->orWhere('start_date', '<=', $now);
         })->where(function ($q) use ($now) {
             $q->whereNull('end_date')
-              ->orWhere('end_date', '>=', $now);
+                ->orWhere('end_date', '>=', $now);
         });
     }
 
@@ -56,20 +56,20 @@ class Slider extends Model
     // Check if slider is currently active and within date range
     public function isCurrentlyActive()
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
         $now = date('Y-m-d');
-        
+
         if ($this->start_date && $this->start_date > $now) {
             return false;
         }
-        
+
         if ($this->end_date && $this->end_date < $now) {
             return false;
         }
-        
+
         return true;
     }
 }

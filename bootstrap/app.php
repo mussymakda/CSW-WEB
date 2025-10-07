@@ -15,6 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
+
+        // Register custom middleware
+        $middleware->alias([
+            'rate_limit' => \App\Http\Middleware\RateLimitMiddleware::class,
+            'security_headers' => \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
+        // Apply security headers globally
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

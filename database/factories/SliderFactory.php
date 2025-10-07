@@ -19,7 +19,7 @@ class SliderFactory extends Factory
         return [
             'title' => $this->faker->sentence(3),
             'description' => $this->faker->paragraph(2),
-            'image_url' => 'sliders/' . $this->faker->uuid() . '.jpg',
+            'image_url' => 'sliders/'.$this->faker->uuid().'.jpg',
             'link_url' => $this->faker->url(),
             'link_text' => $this->faker->words(2, true),
             'start_date' => $this->faker->dateTimeBetween('-1 week', 'now'),

@@ -22,13 +22,13 @@ return new class extends Migration
             $table->enum('status', ['enrolled', 'active', 'completed', 'dropped', 'paused'])->default('enrolled');
             $table->decimal('grade', 5, 2)->nullable();
             $table->text('notes')->nullable();
-            
+
             // Test tracking fields
             $table->integer('total_tests')->default(20);
             $table->integer('tests_taken')->default(0);
             $table->integer('tests_passed')->default(0);
             $table->decimal('average_score', 5, 2)->default(0);
-            
+
             $table->timestamps();
         });
     }

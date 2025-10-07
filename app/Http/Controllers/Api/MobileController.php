@@ -7,16 +7,15 @@ use App\Models\DailySchedule;
 use App\Models\GuidanceTip;
 use App\Models\ParticipantCourseProgress;
 use App\Models\Slider;
+use App\Models\UserNotification;
 use App\Models\VideoView;
 use App\Models\WorkoutSubcategory;
-use App\Models\WorkoutVideo;
-use App\Models\UserNotification;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Carbon\Carbon;
 
 class MobileController extends Controller
 {
@@ -50,15 +49,15 @@ class MobileController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'schedules' => $schedules
-                ]
+                    'schedules' => $schedules,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load your schedule at the moment. Please try again later.',
-                'error_code' => 'SCHEDULE_FETCH_ERROR'
+                'error_code' => 'SCHEDULE_FETCH_ERROR',
             ], 500);
         }
     }
@@ -70,7 +69,7 @@ class MobileController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             $progress = ParticipantCourseProgress::with('courseBatch.course')
                 ->where('participant_id', $participant->id)
                 ->whereNotNull('started_at')
@@ -78,18 +77,18 @@ class MobileController extends Controller
                 ->orderBy('enrollment_date', 'desc')
                 ->first();
 
-            if (!$progress) {
+            if (! $progress) {
                 return response()->json([
                     'success' => true,
                     'data' => [
                         'has_active_course' => false,
-                        'message' => 'No active course found'
-                    ]
+                        'message' => 'No active course found',
+                    ],
                 ]);
             }
 
             // Calculate expected completion date based on course batch end date
-            $expectedCompletionDate = $progress->courseBatch->end_date ?? 
+            $expectedCompletionDate = $progress->courseBatch->end_date ??
                                     Carbon::now()->addMonths(3)->format('Y-m-d');
 
             return response()->json([
@@ -111,15 +110,15 @@ class MobileController extends Controller
                         'total' => $progress->total_exams ?? 0,
                         'taken' => $progress->exams_taken ?? 0,
                         'needed' => $progress->exams_needed ?? 0,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load your progress information. Please try again later.',
-                'error_code' => 'PROGRESS_FETCH_ERROR'
+                'error_code' => 'PROGRESS_FETCH_ERROR',
             ], 500);
         }
     }
@@ -131,15 +130,15 @@ class MobileController extends Controller
     {
         try {
             $today = Carbon::today();
-            
+
             $sliders = Slider::where('is_active', true)
                 ->where(function ($query) use ($today) {
                     $query->where('start_date', '<=', $today)
-                          ->orWhereNull('start_date');
+                        ->orWhereNull('start_date');
                 })
                 ->where(function ($query) use ($today) {
                     $query->where('end_date', '>=', $today)
-                          ->orWhereNull('end_date');
+                        ->orWhereNull('end_date');
                 })
                 ->orderBy('sort_order')
                 ->orderBy('created_at', 'desc')
@@ -149,7 +148,7 @@ class MobileController extends Controller
                         'id' => $slider->id,
                         'title' => $slider->title,
                         'description' => $slider->description,
-                        'image_url' => $slider->image_url ? asset('storage/' . $slider->image_url) : null,
+                        'image_url' => $slider->image_url ? asset('storage/'.$slider->image_url) : null,
                         'link_url' => $slider->link_url,
                         'link_text' => $slider->link_text,
                         'start_date' => $slider->start_date?->format('Y-m-d'),
@@ -161,15 +160,15 @@ class MobileController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'sliders' => $sliders
-                ]
+                    'sliders' => $sliders,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load promotional content. Please try again later.',
-                'error_code' => 'SLIDERS_FETCH_ERROR'
+                'error_code' => 'SLIDERS_FETCH_ERROR',
             ], 500);
         }
     }
@@ -181,10 +180,10 @@ class MobileController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             // Get participant's selected goals to suggest relevant workouts
             $participantGoals = $participant->goals()->pluck('goals.id');
-            
+
             $suggestedWorkouts = WorkoutSubcategory::with('goals')
                 ->when($participantGoals->isNotEmpty(), function ($query) use ($participantGoals) {
                     // Prioritize workouts related to participant's goals
@@ -225,7 +224,7 @@ class MobileController extends Controller
                             'related_goals' => [],
                         ];
                     });
-                
+
                 $suggestedWorkouts = $suggestedWorkouts->merge($additionalWorkouts);
             }
 
@@ -234,14 +233,14 @@ class MobileController extends Controller
                 'data' => [
                     'suggested_workouts' => $suggestedWorkouts->values(),
                     'total_count' => $suggestedWorkouts->count(),
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load workout suggestions. Please try again later.',
-                'error_code' => 'SUGGESTED_WORKOUTS_ERROR'
+                'error_code' => 'SUGGESTED_WORKOUTS_ERROR',
             ], 500);
         }
     }
@@ -268,15 +267,15 @@ class MobileController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'guidance_tips' => $guidanceTips
-                ]
+                    'guidance_tips' => $guidanceTips,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load guidance tips. Please try again later.',
-                'error_code' => 'GUIDANCE_TIPS_ERROR'
+                'error_code' => 'GUIDANCE_TIPS_ERROR',
             ], 500);
         }
     }
@@ -288,25 +287,25 @@ class MobileController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             // Validate subcategory ID
-            if (!is_numeric($subcategoryId) || $subcategoryId <= 0) {
+            if (! is_numeric($subcategoryId) || $subcategoryId <= 0) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Please provide a valid workout category.',
-                    'error_code' => 'INVALID_WORKOUT_ID'
+                    'error_code' => 'INVALID_WORKOUT_ID',
                 ], 400);
             }
-            
+
             $workoutSubcategory = WorkoutSubcategory::with(['workoutVideos' => function ($query) {
                 $query->orderBy('duration_minutes');
             }])->find($subcategoryId);
-            
-            if (!$workoutSubcategory) {
+
+            if (! $workoutSubcategory) {
                 return response()->json([
                     'success' => false,
                     'message' => 'The requested workout category was not found.',
-                    'error_code' => 'WORKOUT_NOT_FOUND'
+                    'error_code' => 'WORKOUT_NOT_FOUND',
                 ], 404);
             }
 
@@ -325,7 +324,7 @@ class MobileController extends Controller
                 '20m' => [],
                 '30m' => [],
                 '45m' => [],
-                '50m' => []
+                '50m' => [],
             ];
 
             foreach ($workoutSubcategory->workoutVideos as $video) {
@@ -370,14 +369,14 @@ class MobileController extends Controller
                         'image_url' => $workoutSubcategory->image_url,
                     ],
                     'videos_by_duration' => $videosByDuration,
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load workout details. Please try again later.',
-                'error_code' => 'WORKOUT_DETAILS_ERROR'
+                'error_code' => 'WORKOUT_DETAILS_ERROR',
             ], 500);
         }
     }
@@ -389,7 +388,7 @@ class MobileController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             $validator = Validator::make($request->all(), [
                 'workout_video_id' => 'required|integer|exists:workout_videos,id',
                 'duration_watched_seconds' => 'integer|min:0|max:7200',
@@ -401,13 +400,13 @@ class MobileController extends Controller
                 'duration_watched_seconds.min' => 'Watch duration cannot be negative.',
                 'duration_watched_seconds.max' => 'Watch duration seems unusually long. Please try again.',
             ]);
-            
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unable to track video progress.',
                     'error_code' => 'VIDEO_TRACKING_VALIDATION_ERROR',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -428,14 +427,14 @@ class MobileController extends Controller
                 'message' => 'Video view logged successfully',
                 'data' => [
                     'video_view_id' => $videoView->id,
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to track your video progress. This won\'t affect your workout experience.',
-                'error_code' => 'VIDEO_TRACKING_ERROR'
+                'error_code' => 'VIDEO_TRACKING_ERROR',
             ], 500);
         }
     }
@@ -447,7 +446,7 @@ class MobileController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             $workoutHistory = VideoView::where('participant_id', $participant->id)
                 ->with(['workoutVideo.workoutSubcategory'])
                 ->orderBy('viewed_at', 'desc')
@@ -459,6 +458,7 @@ class MobileController extends Controller
                     $subcategoriesForDay = $viewsForDay->groupBy('workoutVideo.workoutSubcategory.id')
                         ->map(function ($subcategoryViews) {
                             $subcategory = $subcategoryViews->first()->workoutVideo->workoutSubcategory;
+
                             return [
                                 'subcategory' => [
                                     'id' => $subcategory->id,
@@ -488,15 +488,15 @@ class MobileController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'workout_history' => $workoutHistory
-                ]
+                    'workout_history' => $workoutHistory,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load your workout history. Please try again later.',
-                'error_code' => 'WORKOUT_HISTORY_ERROR'
+                'error_code' => 'WORKOUT_HISTORY_ERROR',
             ], 500);
         }
     }
@@ -508,7 +508,7 @@ class MobileController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             $notifications = UserNotification::where('participant_id', $participant->id)
                 ->orderBy('created_at', 'desc')
                 ->get()
@@ -527,15 +527,15 @@ class MobileController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'notifications' => $notifications
-                ]
+                    'notifications' => $notifications,
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch notifications: ' . $e->getMessage(),
-                'error_code' => 'NOTIFICATIONS_FETCH_ERROR'
+                'message' => 'Failed to fetch notifications: '.$e->getMessage(),
+                'error_code' => 'NOTIFICATIONS_FETCH_ERROR',
             ], 500);
         }
     }
@@ -551,7 +551,7 @@ class MobileController extends Controller
                 'title' => 'required|string|min:3|max:255',
                 'email' => 'required|email:rfc,dns|max:255',
                 'description' => 'required|string|min:10|max:5000',
-                'attachment' => 'nullable|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png,gif,txt,zip'
+                'attachment' => 'nullable|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png,gif,txt,zip',
             ], [
                 'title.required' => 'Please provide a subject for your message.',
                 'title.min' => 'Subject must be at least 3 characters long.',
@@ -563,7 +563,7 @@ class MobileController extends Controller
                 'description.max' => 'Description cannot exceed 5000 characters.',
                 'attachment.file' => 'The attachment must be a valid file.',
                 'attachment.max' => 'Attachment size cannot exceed 10MB.',
-                'attachment.mimes' => 'Attachment must be a PDF, Word document, image, text file, or ZIP archive.'
+                'attachment.mimes' => 'Attachment must be a PDF, Word document, image, text file, or ZIP archive.',
             ]);
 
             if ($validator->fails()) {
@@ -571,7 +571,7 @@ class MobileController extends Controller
                     'success' => false,
                     'message' => 'Please check your input and try again.',
                     'error_code' => 'VALIDATION_ERROR',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -584,17 +584,17 @@ class MobileController extends Controller
                 try {
                     $file = $request->file('attachment');
                     $attachmentName = $file->getClientOriginalName();
-                    $sanitizedName = time() . '_' . preg_replace('/[^A-Za-z0-9\-_\.]/', '', $attachmentName);
+                    $sanitizedName = time().'_'.preg_replace('/[^A-Za-z0-9\-_\.]/', '', $attachmentName);
                     $attachmentPath = $file->storeAs('contact-attachments', $sanitizedName, 'public');
-                    
-                    if (!$attachmentPath) {
+
+                    if (! $attachmentPath) {
                         throw new \Exception('Failed to save attachment');
                     }
                 } catch (\Exception $e) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Unable to process your attachment. Please try with a different file or contact us without an attachment.',
-                        'error_code' => 'ATTACHMENT_UPLOAD_ERROR'
+                        'error_code' => 'ATTACHMENT_UPLOAD_ERROR',
                     ], 422);
                 }
             }
@@ -613,18 +613,18 @@ class MobileController extends Controller
 
             // Get admin email from config
             $adminEmail = config('mail.admin_email', 'admin@example.com');
-            
+
             try {
                 // Send email to admin
                 Mail::send('emails.contact-us', $contactData, function ($message) use ($contactData, $adminEmail, $attachmentPath) {
                     $message->to($adminEmail)
-                            ->subject('Contact Us: ' . $contactData['title'])
-                            ->replyTo($contactData['participant_email'], $contactData['participant_name']);
-                    
+                        ->subject('Contact Us: '.$contactData['title'])
+                        ->replyTo($contactData['participant_email'], $contactData['participant_name']);
+
                     // Attach file if exists
                     if ($attachmentPath && Storage::disk('public')->exists($attachmentPath)) {
-                        $message->attach(storage_path('app/public/' . $attachmentPath), [
-                            'as' => $contactData['attachment_name']
+                        $message->attach(storage_path('app/public/'.$attachmentPath), [
+                            'as' => $contactData['attachment_name'],
                         ]);
                     }
                 });
@@ -632,7 +632,7 @@ class MobileController extends Controller
                 // Send confirmation email to participant
                 Mail::send('emails.contact-us-confirmation', $contactData, function ($message) use ($contactData) {
                     $message->to($contactData['participant_email'], $contactData['participant_name'])
-                            ->subject('We received your message - ' . $contactData['title']);
+                        ->subject('We received your message - '.$contactData['title']);
                 });
 
                 return response()->json([
@@ -640,8 +640,8 @@ class MobileController extends Controller
                     'message' => 'Your message has been sent successfully! We will get back to you within 24 hours.',
                     'data' => [
                         'submitted_at' => $contactData['submitted_at'],
-                        'reference_id' => 'CSW-' . $participant->id . '-' . time()
-                    ]
+                        'reference_id' => 'CSW-'.$participant->id.'-'.time(),
+                    ],
                 ], 200);
 
             } catch (\Exception $e) {
@@ -653,7 +653,7 @@ class MobileController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'We are currently experiencing technical difficulties. Please try again later or contact us directly.',
-                    'error_code' => 'EMAIL_SEND_ERROR'
+                    'error_code' => 'EMAIL_SEND_ERROR',
                 ], 503);
             }
 
@@ -666,7 +666,7 @@ class MobileController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An unexpected error occurred. Please try again later.',
-                'error_code' => 'CONTACT_US_ERROR'
+                'error_code' => 'CONTACT_US_ERROR',
             ], 500);
         }
     }

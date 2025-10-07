@@ -3,15 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Participant;
 use App\Models\Goal;
-use Illuminate\Http\Request;
+use App\Models\Participant;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class OnboardingController extends Controller
 {
@@ -34,16 +32,16 @@ class OnboardingController extends Controller
 
         try {
             $participant = Participant::where('email', $request->email)->first();
-            
+
             // Generate and send OTP
             $otp = $participant->generateEmailOtp();
-            
+
             // Send OTP via email (you can customize this with proper email template)
             Mail::raw(
                 "Your verification code is: {$otp}\n\nThis code will expire in 10 minutes.",
                 function ($message) use ($participant) {
                     $message->to($participant->email)
-                           ->subject('Your Verification Code');
+                        ->subject('Your Verification Code');
                 }
             );
 
@@ -85,8 +83,8 @@ class OnboardingController extends Controller
 
         try {
             $participant = Participant::where('email', $request->email)->first();
-            
-            if (!$participant->verifyEmailOtp($request->otp)) {
+
+            if (! $participant->verifyEmailOtp($request->otp)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid or expired OTP',
@@ -127,7 +125,7 @@ class OnboardingController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             $participant->update([
                 'terms_accepted' => true,
                 'terms_accepted_at' => now(),
@@ -158,7 +156,7 @@ class OnboardingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:participants,email,' . $request->user()->id,
+            'email' => 'nullable|email|unique:participants,email,'.$request->user()->id,
             'phone' => 'nullable|string|max:255',
             'dob' => 'nullable|date|before:today',
             'gender' => 'nullable|in:male,female,other',
@@ -175,21 +173,21 @@ class OnboardingController extends Controller
 
         try {
             $participant = $request->user();
-            
+
             // Handle profile picture upload
             $updateData = [];
-            
+
             if ($request->hasFile('profile_picture')) {
                 // Delete old profile picture if exists
                 if ($participant->profile_picture && \Storage::disk('public')->exists($participant->profile_picture)) {
                     \Storage::disk('public')->delete($participant->profile_picture);
                 }
-                
+
                 // Store new profile picture
                 $profilePicturePath = $request->file('profile_picture')->store('profiles', 'public');
                 $updateData['profile_picture'] = $profilePicturePath;
             }
-            
+
             // Update other profile fields
             $fields = ['name', 'email', 'phone', 'dob', 'gender'];
             foreach ($fields as $field) {
@@ -199,14 +197,14 @@ class OnboardingController extends Controller
             }
 
             $participant->update($updateData);
-            
+
             // Get fresh participant data with profile picture URL
             $freshParticipant = $participant->fresh();
             $responseData = $freshParticipant->toArray();
-            
+
             // Add profile picture URL if exists
             if ($freshParticipant->profile_picture) {
-                $responseData['profile_picture_url'] = asset('storage/' . $freshParticipant->profile_picture);
+                $responseData['profile_picture_url'] = asset('storage/'.$freshParticipant->profile_picture);
             }
 
             return response()->json([
@@ -221,9 +219,9 @@ class OnboardingController extends Controller
             \Log::error('Profile update failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update profile',
@@ -252,10 +250,10 @@ class OnboardingController extends Controller
 
         try {
             $participant = $request->user();
-            
+
             // Sync the selected goals (this will replace any existing goal selections)
             $participant->goals()->sync($request->goal_ids);
-            
+
             // Also set the first goal as the primary goal for backward compatibility
             if (count($request->goal_ids) > 0) {
                 $participant->update(['goal_id' => $request->goal_ids[0]]);
@@ -298,7 +296,7 @@ class OnboardingController extends Controller
 
         try {
             $participant = $request->user();
-            
+
             $participant->update([
                 'weight' => $request->weight,
             ]);
@@ -339,7 +337,7 @@ class OnboardingController extends Controller
 
         try {
             $participant = $request->user();
-            
+
             $participant->update([
                 'height' => $request->height,
             ]);
@@ -368,30 +366,30 @@ class OnboardingController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             // Check if all required onboarding steps are completed
             if ($participant->needsOnboarding()) {
                 $missing = [];
-                
-                if (!$participant->email_verified_at) {
+
+                if (! $participant->email_verified_at) {
                     $missing[] = 'Email verification';
                 }
-                if (!$participant->password_changed_from_default) {
+                if (! $participant->password_changed_from_default) {
                     $missing[] = 'Password change';
                 }
-                if (!$participant->terms_accepted) {
+                if (! $participant->terms_accepted) {
                     $missing[] = 'Terms acceptance';
                 }
-                
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot complete onboarding. Missing steps: ' . implode(', ', $missing),
+                    'message' => 'Cannot complete onboarding. Missing steps: '.implode(', ', $missing),
                     'data' => [
                         'missing_steps' => $missing,
                     ],
                 ], 400);
             }
-            
+
             $participant->completeOnboarding();
 
             return response()->json([
@@ -431,15 +429,15 @@ class OnboardingController extends Controller
 
         try {
             $participant = $request->user();
-            
+
             // Delete old profile picture if exists
             if ($participant->profile_picture && \Storage::disk('public')->exists($participant->profile_picture)) {
                 \Storage::disk('public')->delete($participant->profile_picture);
             }
-            
+
             // Store new profile picture
             $profilePicturePath = $request->file('profile_picture')->store('profiles', 'public');
-            
+
             $participant->update([
                 'profile_picture' => $profilePicturePath,
             ]);
@@ -449,7 +447,7 @@ class OnboardingController extends Controller
                 'message' => 'Profile picture updated successfully',
                 'data' => [
                     'profile_picture' => $profilePicturePath,
-                    'profile_picture_url' => asset('storage/' . $profilePicturePath),
+                    'profile_picture_url' => asset('storage/'.$profilePicturePath),
                     'needs_onboarding' => $participant->fresh()->needsOnboarding(),
                 ],
             ]);
@@ -469,15 +467,15 @@ class OnboardingController extends Controller
     {
         try {
             $participant = $request->user();
-            
+
             $status = [
-                'email_verified' => !is_null($participant->email_verified_at),
+                'email_verified' => ! is_null($participant->email_verified_at),
                 'password_changed' => $participant->password_changed_from_default,
                 'terms_accepted' => $participant->terms_accepted,
-                'profile_completed' => !is_null($participant->name),
+                'profile_completed' => ! is_null($participant->name),
                 'goals_selected' => $participant->goals()->count() > 0,
-                'weight_provided' => !is_null($participant->weight),
-                'height_provided' => !is_null($participant->height),
+                'weight_provided' => ! is_null($participant->weight),
+                'height_provided' => ! is_null($participant->height),
                 'onboarding_completed' => $participant->onboarding_completed,
             ];
 

@@ -18,7 +18,7 @@ class CourseBatchFactory extends Factory
     {
         return [
             'course_id' => \App\Models\Course::factory(),
-            'batch_name' => $this->faker->word() . ' Batch',
+            'batch_name' => $this->faker->word().' Batch',
             'start_date' => $this->faker->dateTimeBetween('-2 months', 'now'),
             'end_date' => $this->faker->dateTimeBetween('now', '+6 months'),
             'max_participants' => $this->faker->numberBetween(10, 50),

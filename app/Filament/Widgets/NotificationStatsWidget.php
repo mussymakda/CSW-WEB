@@ -11,8 +11,8 @@ class NotificationStatsWidget extends BaseWidget
 {
     protected static ?string $heading = 'Students Requiring Attention';
 
-    protected int | string | array $columnSpan = 'full';
-    
+    protected int|string|array $columnSpan = 'full';
+
     protected static ?int $sort = 4;
 
     public function table(Table $table): Table
@@ -44,11 +44,12 @@ class NotificationStatsWidget extends BaseWidget
                         if (strlen($state) <= 30) {
                             return null;
                         }
+
                         return $state;
                     }),
                 Tables\Columns\TextColumn::make('progress_percentage')
                     ->label('Progress')
-                    ->formatStateUsing(fn ($state) => $state . '%')
+                    ->formatStateUsing(fn ($state) => $state.'%')
                     ->badge()
                     ->color(fn ($state) => match (true) {
                         $state < 10 => 'danger',

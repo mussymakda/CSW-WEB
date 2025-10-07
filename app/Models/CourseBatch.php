@@ -15,7 +15,7 @@ class CourseBatch extends Model
         'start_date',
         'end_date',
         'max_participants',
-        'status'
+        'status',
     ];
 
     protected $casts = [

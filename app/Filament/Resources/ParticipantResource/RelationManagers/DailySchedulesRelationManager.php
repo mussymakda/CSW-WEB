@@ -7,8 +7,6 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DailySchedulesRelationManager extends RelationManager
 {
@@ -115,7 +113,7 @@ class DailySchedulesRelationManager extends RelationManager
                     ->badge()
                     ->formatStateUsing(fn (?int $state): string => match ($state) {
                         1 => 'High',
-                        2 => 'Medium', 
+                        2 => 'Medium',
                         3 => 'Low',
                         default => 'Medium',
                     })

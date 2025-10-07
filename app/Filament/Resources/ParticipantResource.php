@@ -69,7 +69,7 @@ class ParticipantResource extends Resource
                                 Forms\Components\Toggle::make('email_verified_at')
                                     ->label('Email Verified')
                                     ->disabled()
-                                    ->formatStateUsing(fn($state) => !is_null($state)),
+                                    ->formatStateUsing(fn ($state) => ! is_null($state)),
                                 Forms\Components\Toggle::make('password_changed_from_default')
                                     ->label('Password Changed')
                                     ->disabled(),

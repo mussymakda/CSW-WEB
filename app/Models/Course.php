@@ -13,7 +13,7 @@ class Course extends Model
         'name',
         'description',
         'duration_weeks',
-        'difficulty_level'
+        'difficulty_level',
     ];
 
     public function batches()

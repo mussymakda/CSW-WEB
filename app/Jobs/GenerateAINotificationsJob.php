@@ -11,9 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateAINotificationsJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 300; // 5 minutes timeout
+
     public int $tries = 3;
 
     /**
@@ -33,24 +34,24 @@ class GenerateAINotificationsJob implements ShouldQueue
 
         try {
             $results = $aiNotificationService->generateNotifications();
-            
+
             Log::info('AI notification generation completed', [
                 'generated' => $results['generated'],
-                'errors' => count($results['errors'])
+                'errors' => count($results['errors']),
             ]);
 
-            if (!empty($results['errors'])) {
+            if (! empty($results['errors'])) {
                 Log::warning('AI notification generation had errors', [
-                    'errors' => $results['errors']
+                    'errors' => $results['errors'],
                 ]);
             }
 
         } catch (\Exception $e) {
             Log::error('AI notification generation job failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             throw $e; // Re-throw to trigger job retry
         }
     }

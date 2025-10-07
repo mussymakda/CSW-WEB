@@ -2,28 +2,30 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ParticipantController;
-
+use App\Models\Slider;
 use App\Services\AINotificationService;
-use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Models\Slider;
 
-// Authentication routes (public)
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+// Authentication routes (public) - Limited rate limiting for security
+Route::middleware('rate_limit:10,1')->group(function () {
+    Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+});
 
-// Onboarding routes (public - for first-time login)
-Route::post('/onboarding/send-otp', [App\Http\Controllers\Api\OnboardingController::class, 'sendOtp']);
-Route::post('/onboarding/verify-otp', [App\Http\Controllers\Api\OnboardingController::class, 'verifyOtp']);
+// Onboarding routes (public - for first-time login) - Limited rate limiting
+Route::middleware('rate_limit:5,1')->group(function () {
+    Route::post('/onboarding/send-otp', [App\Http\Controllers\Api\OnboardingController::class, 'sendOtp']);
+    Route::post('/onboarding/verify-otp', [App\Http\Controllers\Api\OnboardingController::class, 'verifyOtp']);
+});
 
-// Protected routes (require authentication)
-Route::middleware('auth:sanctum')->group(function () {
+// Protected routes (require authentication) - Standard rate limiting for authenticated users
+Route::middleware(['auth:sanctum', 'rate_limit:120,1'])->group(function () {
     // Auth routes
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/profile', [AuthController::class, 'profile']);
-    
+
     // Onboarding routes (authenticated)
     Route::prefix('onboarding')->group(function () {
         Route::get('/status', [App\Http\Controllers\Api\OnboardingController::class, 'getOnboardingStatus']);
@@ -35,11 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/update-height', [App\Http\Controllers\Api\OnboardingController::class, 'updateHeight']);
         Route::post('/complete', [App\Http\Controllers\Api\OnboardingController::class, 'completeOnboarding']);
     });
-    
+
     // Goals API endpoints
     Route::get('/goals', [App\Http\Controllers\Api\GoalController::class, 'index']);
     Route::get('/goals/{goalId}', [App\Http\Controllers\Api\GoalController::class, 'show']);
-    
+
     // User profile routes (for Flutter app)
     Route::prefix('user')->group(function () {
         Route::get('/profile', [App\Http\Controllers\Api\UserController::class, 'getProfile']);
@@ -67,60 +69,62 @@ Route::middleware('auth:sanctum')->prefix('mobile')->group(function () {
     Route::post('/contact-us', [App\Http\Controllers\Api\MobileController::class, 'contactUs']);
 });
 
-// Mobile Sliders API endpoint
-Route::get('sliders', function () {
-    $sliders = Slider::active()
-        ->current()
-        ->ordered()
-        ->select(['id', 'title', 'description', 'image_url', 'link_url', 'link_text'])
-        ->get();
-    
-    return response()->json([
-        'success' => true,
-        'data' => $sliders,
-        'count' => $sliders->count()
-    ]);
+// Public API endpoints with moderate rate limiting
+Route::middleware('rate_limit:60,1')->group(function () {
+    // Mobile Sliders API endpoint
+    Route::get('sliders', function () {
+        $sliders = Slider::active()
+            ->current()
+            ->ordered()
+            ->select(['id', 'title', 'description', 'image_url', 'link_url', 'link_text'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $sliders,
+            'count' => $sliders->count(),
+        ]);
+    });
 });
 
-// AI Notifications API
-Route::prefix('ai')->group(function () {
+// AI Notifications API (Admin/restricted endpoints)
+Route::prefix('ai')->middleware('rate_limit:30,1')->group(function () {
     // Generate AI notification for specific participant
     Route::post('notifications/generate/{participant}', function (Request $request, $participantId, AINotificationService $aiService) {
         $participant = \App\Models\Participant::findOrFail($participantId);
-        
+
         $type = $request->input('type', null);
         $extraVariables = $request->input('variables', []);
-        
+
         if ($type) {
             $notification = $aiService->generateSpecificNotification($participant, $type, $extraVariables);
         } else {
             $notification = $aiService->generateParticipantNotification($participant);
         }
-        
+
         if ($notification) {
             return response()->json([
                 'success' => true,
                 'notification' => $notification,
-                'message' => 'AI notification generated successfully'
+                'message' => 'AI notification generated successfully',
             ]);
         }
-        
+
         return response()->json([
             'success' => false,
-            'message' => 'Failed to generate AI notification'
+            'message' => 'Failed to generate AI notification',
         ], 500);
     });
-    
+
     // Check Ollama status
-    Route::get('status', function (OllamaService $ollamaService) {
+    Route::get('status', function () {
         return response()->json([
-            'available' => $ollamaService->isAvailable(),
-            'enabled' => config('ollama.enabled'),
-            'host' => config('ollama.host'),
-            'model' => config('ollama.model'),
+            'available' => false,
+            'enabled' => env('OLLAMA_ENABLED', false),
+            'message' => 'Ollama service is disabled',
         ]);
     });
-    
+
     // Get AI notification statistics
     Route::get('stats', function (AINotificationService $aiService) {
         return response()->json($aiService->getStatistics());
@@ -130,19 +134,21 @@ Route::prefix('ai')->group(function () {
 // Daily schedules for a specific participant
 Route::get('participants/{participant}/schedules', function ($participantId) {
     $participant = \App\Models\Participant::findOrFail($participantId);
+
     return response()->json($participant->dailySchedules);
 });
 
 // Add daily schedule for a participant
 Route::post('participants/{participant}/schedules', function (Request $request, $participantId) {
     $participant = \App\Models\Participant::findOrFail($participantId);
-    
+
     $validated = $request->validate([
         'task' => 'required|string|max:255',
         'time' => 'required|date_format:H:i',
         'day' => 'required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
     ]);
-    
+
     $schedule = $participant->dailySchedules()->create($validated);
+
     return response()->json($schedule, 201);
 });

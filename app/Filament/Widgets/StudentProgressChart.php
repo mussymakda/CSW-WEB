@@ -8,10 +8,10 @@ use Filament\Widgets\ChartWidget;
 class StudentProgressChart extends ChartWidget
 {
     protected static ?string $heading = 'Student Progress Distribution';
-    
+
     protected static ?int $sort = 2;
-    
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -39,12 +39,12 @@ class StudentProgressChart extends ChartWidget
                 ],
             ],
             'labels' => [
-                'Not Started (0%)', 
-                'Beginning (1-25%)', 
-                'Progressing (26-50%)', 
-                'Advancing (51-75%)', 
-                'Near Completion (76-99%)', 
-                'Completed (100%)'
+                'Not Started (0%)',
+                'Beginning (1-25%)',
+                'Progressing (26-50%)',
+                'Advancing (51-75%)',
+                'Near Completion (76-99%)',
+                'Completed (100%)',
             ],
         ];
     }

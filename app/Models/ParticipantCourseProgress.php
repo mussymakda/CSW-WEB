@@ -54,18 +54,23 @@ class ParticipantCourseProgress extends Model
     // Calculate test progress percentage
     public function getTestProgressAttribute()
     {
-        if ($this->total_tests == 0) return 0;
+        if ($this->total_tests == 0) {
+            return 0;
+        }
+
         return ($this->tests_passed / $this->total_tests) * 100;
     }
 
     // Calculate time progress percentage
     public function getTimeProgressAttribute()
     {
-        if (!$this->started_at || !$this->courseBatch) return 0;
-        
+        if (! $this->started_at || ! $this->courseBatch) {
+            return 0;
+        }
+
         $courseDays = $this->courseBatch->course->duration_weeks * 7;
         $daysElapsed = now()->diffInDays($this->started_at);
-        
+
         return min(($daysElapsed / $courseDays) * 100, 100);
     }
 
@@ -74,7 +79,7 @@ class ParticipantCourseProgress extends Model
     {
         $testProgress = $this->test_progress;
         $timeProgress = $this->time_progress;
-        
+
         return ($testProgress * 0.7) + ($timeProgress * 0.3);
     }
 }

@@ -3,15 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\GuidanceTipResource\Pages;
-use App\Filament\Resources\GuidanceTipResource\RelationManagers;
 use App\Models\GuidanceTip;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class GuidanceTipResource extends Resource
 {
@@ -30,24 +27,24 @@ class GuidanceTipResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                
+
                 Forms\Components\FileUpload::make('image')
                     ->image()
                     ->directory('guidance-tips')
                     ->maxSize(5120)
                     ->nullable(),
-                
+
                 Forms\Components\TextInput::make('link')
                     ->required()
                     ->url()
                     ->maxLength(255)
                     ->placeholder('https://example.com'),
-                
+
                 Forms\Components\TextInput::make('sort_order')
                     ->numeric()
                     ->default(0)
                     ->required(),
-                
+
                 Forms\Components\Toggle::make('is_active')
                     ->default(true),
             ]);
@@ -60,22 +57,22 @@ class GuidanceTipResource extends Resource
                 Tables\Columns\ImageColumn::make('image')
                     ->disk('public')
                     ->size(50),
-                
+
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('link')
                     ->limit(50)
                     ->url(fn ($record) => $record->link)
                     ->openUrlInNewTab(),
-                
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
-                
+
                 Tables\Columns\TextColumn::make('sort_order')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -11,17 +11,21 @@ use Illuminate\Support\Facades\Log;
 
 class AINotificationService
 {
-    protected OllamaService $ollama;
+    protected ?OllamaService $ollama;
 
     protected array $prompts;
 
     protected bool $enabled;
 
-    public function __construct(OllamaService $ollama)
+    public function __construct(?OllamaService $ollama = null)
     {
         $this->ollama = $ollama;
-        $this->prompts = config('ollama.notifications.prompts', []);
-        $this->enabled = config('ollama.notifications.enabled', false);
+        $this->prompts = env('OLLAMA_ENABLED', false) ? [
+            'Keep pushing forward, {name}! You\'re making great progress.',
+            'Remember, every workout brings you closer to your goals.',
+            'Consistency is key - you\'ve got this!',
+        ] : [];
+        $this->enabled = env('OLLAMA_ENABLED', false) && $ollama !== null;
     }
 
     /**

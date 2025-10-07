@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Participant;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -34,7 +32,7 @@ class AuthController extends Controller
 
         $participant = Participant::where('email', $request->email)->first();
 
-        if (!$participant || !Hash::check($request->password, $participant->password)) {
+        if (! $participant || ! Hash::check($request->password, $participant->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',

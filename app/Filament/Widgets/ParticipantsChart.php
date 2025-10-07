@@ -3,31 +3,31 @@
 namespace App\Filament\Widgets;
 
 use App\Models\ParticipantCourseProgress;
-use Filament\Widgets\ChartWidget;
 use Carbon\Carbon;
+use Filament\Widgets\ChartWidget;
 
 class ParticipantsChart extends ChartWidget
 {
     protected static ?string $heading = 'Student Enrollment Trends (Last 6 Months)';
-    
+
     protected static ?int $sort = 3;
 
     protected function getData(): array
     {
         $enrollments = [];
         $labels = [];
-        
+
         // Get enrollment data for last 6 months
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             $count = ParticipantCourseProgress::whereYear('enrollment_date', $month->year)
                 ->whereMonth('enrollment_date', $month->month)
                 ->count();
-            
+
             $enrollments[] = $count;
-            $labels[] = $month->year . '-' . str_pad($month->month, 2, '0', STR_PAD_LEFT);
+            $labels[] = $month->year.'-'.str_pad($month->month, 2, '0', STR_PAD_LEFT);
         }
-        
+
         return [
             'datasets' => [
                 [
@@ -46,7 +46,7 @@ class ParticipantsChart extends ChartWidget
     {
         return 'line';
     }
-    
+
     protected function getOptions(): array
     {
         return [

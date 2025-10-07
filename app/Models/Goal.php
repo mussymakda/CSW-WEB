@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Goal extends Model
 {
@@ -18,7 +18,7 @@ class Goal extends Model
 
     public function getDisplayImageUrlAttribute()
     {
-        return $this->display_image ? asset('storage/' . $this->display_image) : null;
+        return $this->display_image ? asset('storage/'.$this->display_image) : null;
     }
 
     public function participants()

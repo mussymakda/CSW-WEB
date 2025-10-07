@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('participant_id')->constrained('participants')->onDelete('cascade');
             $table->foreignId('goal_id')->constrained('goals')->onDelete('cascade');
             $table->timestamps();
-            
+
             // Ensure unique participant-goal combinations
             $table->unique(['participant_id', 'goal_id']);
         });

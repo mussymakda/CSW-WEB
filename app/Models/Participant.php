@@ -4,13 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\HasApiTokens;
 
 class Participant extends Authenticatable
 {
-    use HasFactory, HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -27,7 +26,7 @@ class Participant extends Authenticatable
         'gender',
         'weight_kg',
         'height_cm',
-        'weight', // Keep for backward compatibility 
+        'weight', // Keep for backward compatibility
         'height', // Keep for backward compatibility
         'fitness_level',
         'aceds_no',
@@ -70,10 +69,8 @@ class Participant extends Authenticatable
      */
     public function getProfilePictureUrlAttribute(): ?string
     {
-        return $this->profile_picture ? asset('storage/' . $this->profile_picture) : null;
+        return $this->profile_picture ? asset('storage/'.$this->profile_picture) : null;
     }
-
-
 
     public function goal()
     {
@@ -108,10 +105,10 @@ class Participant extends Authenticatable
      */
     public function needsOnboarding(): bool
     {
-        return !$this->onboarding_completed || 
-               !$this->terms_accepted || 
-               !$this->password_changed_from_default ||
-               !$this->email_verified_at;
+        return ! $this->onboarding_completed ||
+               ! $this->terms_accepted ||
+               ! $this->password_changed_from_default ||
+               ! $this->email_verified_at;
     }
 
     /**
@@ -120,7 +117,7 @@ class Participant extends Authenticatable
     public function generateEmailOtp(): string
     {
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        
+
         $this->update([
             'email_otp' => $otp,
             'email_otp_expires_at' => now()->addMinutes(10), // OTP expires in 10 minutes
@@ -138,7 +135,7 @@ class Participant extends Authenticatable
             return false;
         }
 
-        if (!$this->email_otp_expires_at || $this->email_otp_expires_at->isPast()) {
+        if (! $this->email_otp_expires_at || $this->email_otp_expires_at->isPast()) {
             return false;
         }
 

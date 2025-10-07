@@ -26,6 +26,7 @@ class CSWAdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->darkMode()
             ->colors([
                 'primary' => Color::Amber,
             ])

@@ -27,7 +27,7 @@ class UserNotificationFactory extends Factory
             'Complete your strength training',
             'Record your daily weight',
             'Take progress photos',
-            'Schedule your next workout session'
+            'Schedule your next workout session',
         ];
 
         return [

@@ -4,9 +4,9 @@ namespace App\Filament\Resources\ParticipantProgressResource\Pages;
 
 use App\Filament\Resources\ParticipantProgressResource;
 use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewParticipantProgress extends ViewRecord
 {
@@ -33,7 +33,7 @@ class ViewParticipantProgress extends ViewRecord
                             ->label('Phone'),
                     ])
                     ->columns(3),
-                    
+
                 Infolists\Components\Section::make('Course Details')
                     ->schema([
                         Infolists\Components\TextEntry::make('courseBatch.course.name')
@@ -48,46 +48,46 @@ class ViewParticipantProgress extends ViewRecord
                             ->date(),
                     ])
                     ->columns(2),
-                    
-                Infolists\Components\Section::make('Progress Information')                    ->schema([
-                        Infolists\Components\TextEntry::make('progress_percentage')
-                            ->label('Course Progress')
-                            ->formatStateUsing(fn ($state) => $state . '%')
-                            ->badge()
-                            ->color(fn ($state): string => match (true) {
-                                $state >= 90 => 'success',
-                                $state >= 70 => 'info',
-                                $state >= 50 => 'warning',
-                                default => 'danger',
-                            }),
-                        Infolists\Components\TextEntry::make('status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'enrolled' => 'warning',
-                                'active' => 'info',
-                                'completed' => 'success',
-                                'paused' => 'gray',
-                                'dropped' => 'danger',
-                                default => 'gray',
-                            }),
-                        Infolists\Components\TextEntry::make('enrollment_date')
-                            ->label('Enrollment Date')
-                            ->date(),
-                        Infolists\Components\TextEntry::make('started_at')
-                            ->label('Started At')
-                            ->date()
-                            ->placeholder('Not started yet'),
-                        Infolists\Components\TextEntry::make('completed_at')
-                            ->label('Completed At')
-                            ->date()
-                            ->placeholder('Not completed yet'),
-                        Infolists\Components\TextEntry::make('grade')
-                            ->label('Final Grade')
-                            ->suffix(' pts')
-                            ->placeholder('Not graded yet'),
-                    ])
+
+                Infolists\Components\Section::make('Progress Information')->schema([
+                    Infolists\Components\TextEntry::make('progress_percentage')
+                        ->label('Course Progress')
+                        ->formatStateUsing(fn ($state) => $state.'%')
+                        ->badge()
+                        ->color(fn ($state): string => match (true) {
+                            $state >= 90 => 'success',
+                            $state >= 70 => 'info',
+                            $state >= 50 => 'warning',
+                            default => 'danger',
+                        }),
+                    Infolists\Components\TextEntry::make('status')
+                        ->badge()
+                        ->color(fn (string $state): string => match ($state) {
+                            'enrolled' => 'warning',
+                            'active' => 'info',
+                            'completed' => 'success',
+                            'paused' => 'gray',
+                            'dropped' => 'danger',
+                            default => 'gray',
+                        }),
+                    Infolists\Components\TextEntry::make('enrollment_date')
+                        ->label('Enrollment Date')
+                        ->date(),
+                    Infolists\Components\TextEntry::make('started_at')
+                        ->label('Started At')
+                        ->date()
+                        ->placeholder('Not started yet'),
+                    Infolists\Components\TextEntry::make('completed_at')
+                        ->label('Completed At')
+                        ->date()
+                        ->placeholder('Not completed yet'),
+                    Infolists\Components\TextEntry::make('grade')
+                        ->label('Final Grade')
+                        ->suffix(' pts')
+                        ->placeholder('Not graded yet'),
+                ])
                     ->columns(3),
-                    
+
                 Infolists\Components\Section::make('Additional Notes')
                     ->schema([
                         Infolists\Components\TextEntry::make('notes')

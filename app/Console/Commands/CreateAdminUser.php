@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\User;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
 class CreateAdminUser extends Command
@@ -29,7 +29,7 @@ class CreateAdminUser extends Command
     {
         $email = $this->argument('email') ?? $this->ask('Admin email', 'admin@csw.com');
         $password = $this->argument('password') ?? $this->secret('Admin password (default: password)') ?? 'password';
-        
+
         $user = User::updateOrCreate(
             ['email' => $email],
             [
@@ -40,10 +40,10 @@ class CreateAdminUser extends Command
             ]
         );
 
-        $this->info("Admin user created successfully!");
+        $this->info('Admin user created successfully!');
         $this->info("Email: {$email}");
         $this->info("Password: {$password}");
-        
+
         return 0;
     }
 }
