@@ -37,14 +37,13 @@ Copy the contents from `public_html_index.php` to your `public_html/index.php`:
 
 ### 3. Set Directory Permissions
 ```bash
-chmod -R 755 public_html/storage
-chmod -R 755 public_html/bootstrap/cache
-```
+# You should already be IN the public_html directory
+cd /home/csw/public_html
 
-If you have shell access:
-```bash
-cd public_html
-chmod -R 755 storage bootstrap/cache
+# Set permissions (no public_html/ prefix needed)
+chmod -R 755 storage
+chmod -R 755 bootstrap/cache
+
 # If www-data user exists (Apache/Nginx)
 chown -R www-data:www-data storage bootstrap/cache
 ```
@@ -67,14 +66,43 @@ QUEUE_CONNECTION=database
 FILESYSTEM_DISK=local
 ```
 
-### 5. Run Artisan Commands
+### 5. Fix index.php and Run Artisan Commands
 ```bash
-cd public_html
+# You should be in public_html directory
+pwd
+# Should show: /home/csw/public_html
+
+# CRITICAL: Replace index.php with correct paths
+cat > index.php << 'EOF'
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+
+define('LARAVEL_START', microtime(true));
+
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+// Register the Composer autoloader...
+require __DIR__.'/vendor/autoload.php';
+
+// Bootstrap Laravel and handle the request...
+/** @var Application $app */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+$app->handleRequest(Request::capture());
+EOF
+
+# Set permissions
+chmod 644 index.php
 
 # Generate app key if needed
 php artisan key:generate
 
-# Run migrations
+# Run migrations (after setting up .env)
 php artisan migrate --force
 
 # Cache for production
